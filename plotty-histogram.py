@@ -23,6 +23,7 @@ default_values = {
     # number of bins for the histogram
     'nbins': 50,
     'sigma': None,
+    'filter': None,
     'fmt': 'ro',
     'sep': None,
     'xlabel': 'x axis',
@@ -33,6 +34,8 @@ default_values = {
     'outfile': None,
 }
 
+# filter ops
+VALID_OPS = 'eq', 'ne'
 
 def read_data(infile, options):
     # open infile
@@ -56,6 +59,20 @@ def read_data(infile, options):
         # use space and tab
         data = [item.replace('\t', ' ') for item in data]
     sep = options.sep if options.sep is not None else ' '
+
+    # filter lines
+    if options.filter:
+        new_data = []
+        for row in data:
+            if not row:
+                continue
+            for col, op, val in options.filter:
+                field = row.split(sep)[int(col)]
+                if ((op == 'eq' and field == val) or
+                        (op == 'ne' and field != val)):
+                    new_data.append(row)
+        data = new_data
+
     if options.col == -1:
         x = range(len([row for row in data if row]))
     else:
@@ -122,7 +139,7 @@ def get_options(argv):
                         help='use PLOTTITLE plot title',)
     parser.add_argument('-c', '--col', action='store', type=int,
                         dest='col', default=default_values['col'],
-                        metavar='XCOL',
+                        metavar='COL',
                         help='use COL col',)
     parser.add_argument('-b', '--nbins', action='store', type=int,
                         dest='nbins', default=default_values['nbins'],
@@ -132,6 +149,10 @@ def get_options(argv):
                         dest='sigma', default=default_values['sigma'],
                         metavar='SIGMA',
                         help='use avg += (SIGMA * stddev) to remove outliers',)
+    parser.add_argument('--filter', action='append', type=str, nargs=3,
+                        dest='filter', default=default_values['filter'],
+                        metavar=('COL', 'OP', 'VAL'),
+                        help='select only rows where COL OP VAL is true',)
     parser.add_argument('--sep', action='store', type=str,
                         dest='sep', default=default_values['sep'],
                         metavar='SEP',
@@ -147,7 +168,7 @@ def get_options(argv):
     parser.add_argument('--label', action='store',
                         dest='label', default=default_values['label'],
                         metavar='LABEL',
-                        help='use YLABEL label',)
+                        help='use LABEL label',)
     parser.add_argument('--add-mean', action='store_const',
                         dest='add_mean', const=True,
                         default=default_values['add_mean'],
@@ -166,6 +187,20 @@ def get_options(argv):
                         help='output file',)
     # do the parsing
     options = parser.parse_args(argv[1:])
+
+    # check the filter
+    if options.filter:
+
+        def is_int(s):
+            if s[0] in ('-', '+'):
+                return s[1:].isdigit()
+            return s.isdigit()
+
+        def is_op(s):
+            return s in VALID_OPS
+        for col, op, val in options.filter:
+            assert is_int(col) and is_op(op), 'invalid filter: %s %s %s' % (
+                col, op, val)
     return options
 
 

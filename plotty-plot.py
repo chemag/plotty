@@ -58,6 +58,7 @@ def read_data(infile, options):
         # use space and tab
         data = [item.replace('\t', ' ') for item in data]
     sep = options.sep if options.sep is not None else ' '
+
     # filter lines
     if options.filter:
         new_data = []
@@ -70,6 +71,7 @@ def read_data(infile, options):
                         (op == 'ne' and field != val)):
                     new_data.append(row)
         data = new_data
+
     if options.xcol == -1:
         # use line number
         x = range(len([row for row in data if row]))
