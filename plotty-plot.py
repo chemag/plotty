@@ -28,6 +28,8 @@ default_values = {
     'sep': None,
     'xlabel': 'x axis',
     'ylabel': 'y axis',
+    'xlim': ['-', '-'],
+    'ylim': ['-', '-'],
     'infile': [],
     'outfile': None,
 }
@@ -106,6 +108,17 @@ def create_graph_draw(ax1, x, y, fmt, label, options):
 
 def create_graph_end(ax1, options):
     _ = ax1.legend(loc='upper right')
+
+    # set xlim/ylim
+    if options.xlim[0] != '-':
+        plt.xlim(left=float(options.xlim[0]))
+    if options.xlim[1] != '-':
+        plt.xlim(right=float(options.xlim[1]))
+    if options.ylim[0] != '-':
+        plt.ylim(bottom=float(options.ylim[0]))
+    if options.ylim[1] != '-':
+        plt.ylim(top=float(options.ylim[1]))
+
     # plt.show()
     print('output is %s' % options.outfile)
     plt.savefig('%s' % options.outfile)
@@ -156,6 +169,12 @@ def get_options(argv):
                         dest='label', default=default_values['label'],
                         metavar='LABEL',
                         help='use YLABEL label(s)',)
+    parser.add_argument('--xlim', action='store', type=str, nargs=2,
+                        dest='xlim', default=default_values['xlim'],
+                        metavar=('left', 'right'),)
+    parser.add_argument('--ylim', action='store', type=str, nargs=2,
+                        dest='ylim', default=default_values['ylim'],
+                        metavar=('bottom', 'top'),)
     parser.add_argument('-i', '--infile', action='append',
                         default=default_values['infile'],
                         metavar='input-file',
