@@ -30,7 +30,9 @@ default_values = {
     'ylabel': 'y axis',
     'add_mean': False,
     'add_median': False,
-    'infile': 'histogram_file.txt',
+    'xlim': ['-', '-'],
+    'ylim': ['-', '-'],
+    'infile': None,
     'outfile': None,
 }
 
@@ -119,6 +121,16 @@ def create_graph(x, options):
     ax.set_xlabel(options.xlabel)
     ax.set_ylabel('Frequency of the value')
 
+    # set xlim/ylim
+    if options.xlim[0] != '-':
+        plt.xlim(left=float(options.xlim[0]))
+    if options.xlim[1] != '-':
+        plt.xlim(right=float(options.xlim[1]))
+    if options.ylim[0] != '-':
+        plt.ylim(bottom=float(options.ylim[0]))
+    if options.ylim[1] != '-':
+        plt.ylim(top=float(options.ylim[1]))
+
     # plt.show()
     print('output is %s' % options.outfile)
     plt.savefig('%s' % options.outfile)
@@ -177,6 +189,12 @@ def get_options(argv):
                         dest='add_median', const=True,
                         default=default_values['add_median'],
                         help='Add a line at the median',)
+    parser.add_argument('--xlim', action='store', type=str, nargs=2,
+                        dest='xlim', default=default_values['xlim'],
+                        metavar=('left', 'right'),)
+    parser.add_argument('--ylim', action='store', type=str, nargs=2,
+                        dest='ylim', default=default_values['ylim'],
+                        metavar=('bottom', 'top'),)
     parser.add_argument('infile', type=str,
                         default=default_values['infile'],
                         metavar='input-file',
