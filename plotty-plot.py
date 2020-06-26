@@ -17,6 +17,8 @@ DEFAULT_MARKER = '.'
 DEFAULT_COLORS = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
 DEFAULT_FMT = ['%s%s' % (color, DEFAULT_MARKER) for color in DEFAULT_COLORS]
 
+YSCALE_VALUES = ('linear', 'log', 'symlog', 'logit')
+
 default_values = {
     'debug': 0,
     'title': 'Plot Title',
@@ -30,6 +32,7 @@ default_values = {
     'ylabel': 'y axis',
     'xlim': ['-', '-'],
     'ylim': ['-', '-'],
+    'yscale': 'linear',
     'infile': [],
     'outfile': None,
 }
@@ -119,6 +122,9 @@ def create_graph_end(ax1, options):
     if options.ylim[1] != '-':
         plt.ylim(top=float(options.ylim[1]))
 
+    # set yscale
+    plt.yscale(options.yscale)
+
     # plt.show()
     print('output is %s' % options.outfile)
     plt.savefig('%s' % options.outfile)
@@ -175,6 +181,11 @@ def get_options(argv):
     parser.add_argument('--ylim', action='store', type=str, nargs=2,
                         dest='ylim', default=default_values['ylim'],
                         metavar=('bottom', 'top'),)
+    parser.add_argument('--yscale', action='store', type=str,
+                        dest='yscale', default=default_values['yscale'],
+                        choices=YSCALE_VALUES,
+                        metavar='[%s]' % (' | '.join(YSCALE_VALUES,)),
+                             help='yscale values',)
     parser.add_argument('-i', '--infile', action='append',
                         default=default_values['infile'],
                         metavar='input-file',
