@@ -17,7 +17,7 @@ import sys
 
 default_values = {
     'debug': 0,
-    'title': 'Plot Title',
+    'title': '--title',
     'label': '',
     'col': 0,
     # number of bins for the histogram
@@ -26,8 +26,8 @@ default_values = {
     'filter': None,
     'fmt': 'ro',
     'sep': None,
-    'xlabel': 'x axis',
-    'ylabel': 'y axis',
+    'xlabel': '--xlabel',
+    'ylabel': '--ylabel',
     'add_mean': False,
     'add_median': False,
     'xlim': ['-', '-'],

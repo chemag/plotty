@@ -21,15 +21,15 @@ YSCALE_VALUES = ('linear', 'log', 'symlog', 'logit')
 
 default_values = {
     'debug': 0,
-    'title': 'Plot Title',
+    'title': '--title',
     'label': [],
     'xcol': 0,
     'ycol': 1,
     'filter': None,
     'fmt': [],
     'sep': None,
-    'xlabel': 'x axis',
-    'ylabel': 'y axis',
+    'xlabel': '--xlabel',
+    'ylabel': '--ylabel',
     'xlim': ['-', '-'],
     'ylim': ['-', '-'],
     'yscale': 'linear',
