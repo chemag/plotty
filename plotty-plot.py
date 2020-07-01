@@ -28,6 +28,8 @@ default_values = {
     'sep': None,
     'xlabel': '--xlabel',
     'ylabel': '--ylabel',
+    'xshift': [],
+    'yshift': [],
     'label': [],
     'fmt': [],
     'xlim': ['-', '-'],
@@ -168,6 +170,14 @@ def get_options(argv):
                         dest='ylabel', default=default_values['ylabel'],
                         metavar='YLABEL',
                         help='use YLABEL x label',)
+    parser.add_argument('--xshift', action='append',
+                        dest='xshift', default=default_values['xshift'],
+                        metavar='XSHIFT',
+                        help='use XSHIFT x shift(s)',)
+    parser.add_argument('--yshift', action='append',
+                        dest='yshift', default=default_values['yshift'],
+                        metavar='YSHIFT',
+                        help='use YSHIFT y shift(s)',)
     parser.add_argument('--fmt', action='append',
                         dest='fmt', default=default_values['fmt'],
                         metavar='FMT',
@@ -234,6 +244,17 @@ def main(argv):
         fmt = (options.fmt[index] if index < len(options.fmt) else
                DEFAULT_FMT[index])
         label = options.label[index] if index < len(options.label) else ''
+        # process shift requests
+        xshift = (float(options.xshift[index]) if index < len(options.xshift)
+                  else None)
+        if xshift is not None:
+            print('shifting x by %f' % xshift)
+            xlist = [(x + xshift) for x in xlist]
+        yshift = (float(options.yshift[index]) if index < len(options.yshift)
+                  else None)
+        if yshift is not None:
+            print('shifting y by %f' % yshift)
+            ylist = [(y + yshift) for y in ylist]
         create_graph_draw(ax1, xlist, ylist, fmt, label, options)
     create_graph_end(ax1, options)
     # create_graph(xlist, ylist, options)
