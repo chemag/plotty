@@ -22,14 +22,14 @@ YSCALE_VALUES = ('linear', 'log', 'symlog', 'logit')
 default_values = {
     'debug': 0,
     'title': '--title',
-    'label': [],
     'xcol': 0,
     'ycol': 1,
     'filter': None,
-    'fmt': [],
     'sep': None,
     'xlabel': '--xlabel',
     'ylabel': '--ylabel',
+    'label': [],
+    'fmt': [],
     'xlim': ['-', '-'],
     'ylim': ['-', '-'],
     'yscale': 'linear',
@@ -79,11 +79,12 @@ def read_data(infile, options):
 
     if options.xcol == -1:
         # use line number
-        x = range(len([row for row in data if row]))
+        xlist = range(len([row for row in data if row]))
     else:
-        x = [float(row.split(sep)[options.xcol]) for row in data if row]
-    y = [float(row.split(sep)[options.ycol]) for row in data if row]
-    return x, y
+        xlist = [float(row.split(sep)[options.xcol]) for row in data if row]
+    ylist = [float(row.split(sep)[options.ycol]) for row in data if row]
+
+    return xlist, ylist
 
 
 def create_graph_begin(options):
@@ -102,11 +103,11 @@ def create_graph_begin(options):
     return ax1
 
 
-def create_graph_draw(ax1, x, y, fmt, label, options):
-    ax1.plot(x, y, fmt, label=label)
+def create_graph_draw(ax1, xlist, ylist, fmt, label, options):
+    ax1.plot(xlist, ylist, fmt, label=label)
     if options.debug > 1:
         print('ax1.plot(%r, %r, \'%s\', label=%r)' % (
-            list(x), y, fmt, label))
+            list(xlist), ylist, fmt, label))
 
 
 def create_graph_end(ax1, options):
@@ -229,13 +230,13 @@ def main(argv):
         xy_data.append(read_data(infile, options))
 
     ax1 = create_graph_begin(options)
-    for index, (x, y) in enumerate(xy_data):
+    for index, (xlist, ylist) in enumerate(xy_data):
         fmt = (options.fmt[index] if index < len(options.fmt) else
                DEFAULT_FMT[index])
         label = options.label[index] if index < len(options.label) else ''
-        create_graph_draw(ax1, x, y, fmt, label, options)
+        create_graph_draw(ax1, xlist, ylist, fmt, label, options)
     create_graph_end(ax1, options)
-    # create_graph(x, y, options)
+    # create_graph(xlist, ylist, options)
 
 
 if __name__ == '__main__':
