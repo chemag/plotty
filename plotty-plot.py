@@ -24,8 +24,10 @@ default_values = {
     'title': '--title',
     'xcol': 0,
     'ycol': 1,
+    'ycol2': None,
     'filter': None,
     'sep': None,
+    'sep2': None,
     'xlabel': '--xlabel',
     'ylabel': '--ylabel',
     'xshift': [],
@@ -84,7 +86,13 @@ def read_data(infile, options):
         xlist = range(len([row for row in data if row]))
     else:
         xlist = [float(row.split(sep)[options.xcol]) for row in data if row]
-    ylist = [float(row.split(sep)[options.ycol]) for row in data if row]
+
+    if options.ycol2 is None:
+        ylist = [float(row.split(sep)[options.ycol]) for row in data if row]
+    else:
+        sep2 = options.sep2 if options.sep2 is not None else ' '
+        ylist = [float(row.split(sep)[options.ycol].split(sep2)[options.ycol2])
+                 for row in data if row]
 
     return xlist, ylist
 
@@ -154,6 +162,10 @@ def get_options(argv):
                         dest='ycol', default=default_values['ycol'],
                         metavar='YCOL',
                         help='use YCOL y col',)
+    parser.add_argument('--ycol2', action='store', type=int,
+                        dest='ycol2', default=default_values['ycol2'],
+                        metavar='YCOL2',
+                        help='use YCOL2 for refining y col',)
     parser.add_argument('--filter', action='append', type=str, nargs=3,
                         dest='filter', default=default_values['filter'],
                         metavar=('COL', 'OP', 'VAL'),
@@ -162,6 +174,10 @@ def get_options(argv):
                         dest='sep', default=default_values['sep'],
                         metavar='SEP',
                         help='use SEP as separator',)
+    parser.add_argument('--sep2', action='store', type=str,
+                        dest='sep2', default=default_values['sep2'],
+                        metavar='SEP2',
+                        help='use SEP2 as alternate separator',)
     parser.add_argument('--xlabel', action='store',
                         dest='xlabel', default=default_values['xlabel'],
                         metavar='XLABEL',
