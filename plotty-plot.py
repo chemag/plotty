@@ -26,6 +26,7 @@ default_values = {
     'ycol': 1,
     'ycol2': None,
     'ydelta': False,
+    'ycumulative': False,
     'filter': None,
     'sep': None,
     'sep2': None,
@@ -97,6 +98,12 @@ def read_data(infile, options):
     # support for plotting `y[k] - y[k-1]` instead of `y[k]`
     if options.ydelta:
         ylist = [y1 - y0 for y0, y1 in zip([ylist[0]] + ylist[:-1], ylist)]
+    elif options.ycumulative:
+        new_ylist = []
+        for y in ylist:
+            prev_y = new_ylist[-1] if new_ylist else 0
+            new_ylist.append(y + prev_y)
+        ylist = new_ylist
 
     return xlist, ylist
 
@@ -172,7 +179,11 @@ def get_options(argv):
                         help='use YCOL2 for refining y col',)
     parser.add_argument('--ydelta', action='store_const', const=True,
                         dest='ydelta', default=default_values['ydelta'],
-                        help='use (y[k] - y[k-1]) for y col',)
+                        help='use $y[k] = (y[k] - y[k-1])$',)
+    parser.add_argument('--ycumulative', action='store_const', const=True,
+                        dest='ycumulative',
+                        default=default_values['ycumulative'],
+                        help='use $y[k] = \\sum_i=0^k y[i]$',)
     parser.add_argument('--filter', action='append', type=str, nargs=3,
                         dest='filter', default=default_values['filter'],
                         metavar=('COL', 'OP', 'VAL'),
