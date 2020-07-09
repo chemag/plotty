@@ -25,6 +25,7 @@ default_values = {
     'xcol': 0,
     'ycol': 1,
     'ycol2': None,
+    'ydelta': False,
     'filter': None,
     'sep': None,
     'sep2': None,
@@ -93,6 +94,9 @@ def read_data(infile, options):
         sep2 = options.sep2 if options.sep2 is not None else ' '
         ylist = [float(row.split(sep)[options.ycol].split(sep2)[options.ycol2])
                  for row in data if row]
+    # support for plotting `y[k] - y[k-1]` instead of `y[k]`
+    if options.ydelta:
+        ylist = [y1 - y0 for y0, y1 in zip([ylist[0]] + ylist[:-1], ylist)]
 
     return xlist, ylist
 
@@ -166,6 +170,9 @@ def get_options(argv):
                         dest='ycol2', default=default_values['ycol2'],
                         metavar='YCOL2',
                         help='use YCOL2 for refining y col',)
+    parser.add_argument('--ydelta', action='store_const', const=True,
+                        dest='ydelta', default=default_values['ydelta'],
+                        help='use (y[k] - y[k-1]) for y col',)
     parser.add_argument('--filter', action='append', type=str, nargs=3,
                         dest='filter', default=default_values['filter'],
                         metavar=('COL', 'OP', 'VAL'),
