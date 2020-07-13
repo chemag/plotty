@@ -23,6 +23,7 @@ default_values = {
     'debug': 0,
     'title': '--title',
     'xcol': 0,
+    'xcol2': None,
     'ycol': 1,
     'ycol2': None,
     'ydelta': False,
@@ -83,18 +84,49 @@ def read_data(infile, options):
                     new_data.append(row)
         data = new_data
 
-    if options.xcol == -1:
-        # use line number
-        xlist = range(len([row for row in data if row]))
-    else:
-        xlist = [float(row.split(sep)[options.xcol]) for row in data if row]
+    xlist = []
+    ylist = []
+    sep2 = options.sep2 if options.sep2 is not None else ' '
+    for i, row in enumerate(data):
+        if not row:
+            # empty row
+            continue
+        # get x component
+        if options.xcol == -1:
+            # use line number
+            x = i
+        elif options.xcol2 is None:
+            # use column value
+            x = float(row.split(sep)[options.xcol])
+        else:
+            # get column value
+            value = row.split(sep)[options.xcol]
+            # parse column value
+            if not value:
+                # empty column value
+                continue
+            # parse value
+            x = value.split(sep2)[options.xcol2]
+        # get y component
+        if options.ycol == -1:
+            # use line number
+            y = i
+        elif options.ycol2 is None:
+            # use column value
+            y = float(row.split(sep)[options.ycol])
+        else:
+            # get column value
+            value = row.split(sep)[options.ycol]
+            # parse column value
+            if not value:
+                # empty column value
+                continue
+            # parse value
+            y = value.split(sep2)[options.ycol2]
+        # append values
+        xlist.append(x)
+        ylist.append(y)
 
-    if options.ycol2 is None:
-        ylist = [float(row.split(sep)[options.ycol]) for row in data if row]
-    else:
-        sep2 = options.sep2 if options.sep2 is not None else ' '
-        ylist = [float(row.split(sep)[options.ycol].split(sep2)[options.ycol2])
-                 for row in data if row]
     # support for plotting `y[k] - y[k-1]` instead of `y[k]`
     if options.ydelta:
         ylist = [y1 - y0 for y0, y1 in zip([ylist[0]] + ylist[:-1], ylist)]
@@ -169,6 +201,10 @@ def get_options(argv):
                         dest='xcol', default=default_values['xcol'],
                         metavar='XCOL',
                         help='use XCOL x col',)
+    parser.add_argument('--xcol2', action='store', type=int,
+                        dest='xcol2', default=default_values['xcol2'],
+                        metavar='XCOL2',
+                        help='use XCOL2 for refining x col',)
     parser.add_argument('--ycol', action='store', type=int,
                         dest='ycol', default=default_values['ycol'],
                         metavar='YCOL',
