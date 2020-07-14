@@ -106,7 +106,7 @@ def read_data(infile, options):
                 # empty column value
                 continue
             # parse value
-            x = value.split(sep2)[options.xcol2]
+            x = float(value.split(sep2)[options.xcol2])
         # get y component
         if options.ycol == -1:
             # use line number
@@ -122,7 +122,7 @@ def read_data(infile, options):
                 # empty column value
                 continue
             # parse value
-            y = value.split(sep2)[options.ycol2]
+            y = float(value.split(sep2)[options.ycol2])
         # append values
         xlist.append(x)
         ylist.append(y)
