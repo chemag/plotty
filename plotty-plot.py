@@ -36,9 +36,11 @@ default_values = {
     # histogram information
     'histogram': False,
     # number of bins for the histogram
-    'histogram-bins': 50,
+    'histogram_bins': 50,
     # filter outliers
-    'histogram-sigma': None,
+    'histogram_sigma': None,
+    # use relative values
+    'histogram_ratio': False,
     'xlabel': '--xlabel',
     'ylabel': '--ylabel',
     'xshift': [],
@@ -108,6 +110,11 @@ def get_histogram(xlist, options):
             i += 1
         else:
             ylist[-1] += 1
+
+    # support for ratio histograms
+    if options.histogram_ratio:
+        ylist = [(1.0 * y) / sum(ylist) for y in ylist]
+
     return real_xlist, ylist
 
 
@@ -339,14 +346,18 @@ def get_options(argv):
                         help='sort and bin xlist, get ylist as histogram',)
     parser.add_argument('--histogram-bins', action='store', type=int,
                         dest='histogram_bins',
-                        default=default_values['histogram-bins'],
+                        default=default_values['histogram_bins'],
                         metavar='NBINS',
                         help='use NBINS bins',)
     parser.add_argument('--histogram-sigma', action='store', type=float,
                         dest='histogram_sigma',
-                        default=default_values['histogram-sigma'],
+                        default=default_values['histogram_sigma'],
                         metavar='SIGMA',
                         help='use avg += (SIGMA * stddev) to remove outliers',)
+    parser.add_argument('--histogram-ratio', action='store_const', const=True,
+                        dest='histogram_ratio',
+                        default=default_values['histogram_ratio'],
+                        help='use ratio for ylist instead of total number',)
     parser.add_argument('--xlabel', action='store',
                         dest='xlabel', default=default_values['xlabel'],
                         metavar='XLABEL',
