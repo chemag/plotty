@@ -21,12 +21,14 @@ DEFAULT_FMT = DEFAULT_COLORS
 default_values = {
     'debug': 0,
     'title': '--title',
-    'col': 0,
+    'xcol': 0,
+    'xcol2': None,
     # number of bins for the histogram
     'nbins': 50,
     'sigma': None,
     'filter': None,
     'sep': None,
+    'sep2': None,
     'xlabel': '--xlabel',
     'ylabel': '--ylabel',
     'add_mean': False,
@@ -81,17 +83,28 @@ def read_data(infile, options):
         data = new_data
 
     xlist = []
+    ylist = []
+    sep2 = options.sep2 if options.sep2 is not None else ' '
     for i, row in enumerate(data):
         if not row:
             # empty row
             continue
         # get x component
-        if options.col == -1:
+        if options.xcol == -1:
             # use line number
             x = i
-        else:
+        elif options.xcol2 is None:
             # use column value
-            x = float(row.split(sep)[options.col])
+            x = float(row.split(sep)[options.xcol])
+        else:
+            # get column value
+            value = row.split(sep)[options.xcol]
+            # parse column value
+            if not value:
+                # empty column value
+                continue
+            # parse value
+            x = float(value.split(sep2)[options.xcol2])
         # append values
         xlist.append(x)
 
@@ -182,9 +195,13 @@ def get_options(argv):
                         metavar='PLOTTITLE',
                         help='use PLOTTITLE plot title',)
     parser.add_argument('-c', '--col', action='store', type=int,
-                        dest='col', default=default_values['col'],
+                        dest='xcol', default=default_values['xcol'],
                         metavar='COL',
                         help='use COL col',)
+    parser.add_argument('--col2', action='store', type=int,
+                        dest='xcol2', default=default_values['xcol2'],
+                        metavar='XCOL2',
+                        help='use XCOL2 for refining x col',)
     parser.add_argument('-b', '--nbins', action='store', type=int,
                         dest='nbins', default=default_values['nbins'],
                         metavar='NBINS',
