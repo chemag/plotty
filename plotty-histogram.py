@@ -218,6 +218,10 @@ def get_options(argv):
                         dest='sep', default=default_values['sep'],
                         metavar='SEP',
                         help='use SEP as separator',)
+    parser.add_argument('--sep2', action='store', type=str,
+                        dest='sep2', default=default_values['sep2'],
+                        metavar='SEP2',
+                        help='use SEP2 as alternate separator',)
     parser.add_argument('--xlabel', action='store',
                         dest='xlabel', default=default_values['xlabel'],
                         metavar='XLABEL',
