@@ -31,6 +31,12 @@ default_values = {
     'filter': None,
     'sep': None,
     'sep2': None,
+    # histogram information
+    'histogram': False,
+    # number of bins for the histogram
+    'histogram-bins': 50,
+    # filter outliers
+    'histogram-sigma': None,
     'xlabel': '--xlabel',
     'ylabel': '--ylabel',
     'xshift': [],
@@ -46,6 +52,59 @@ default_values = {
 
 # filter ops
 VALID_OPS = 'eq', 'ne'
+
+
+
+def remove_outliers(xlist, sigma):
+    # remove values way over the average
+    total_x = sum(xlist)
+    mean_x = total_x / len(xlist)
+    stddev_x = math.sqrt(sum((i - mean_x) ** 2 for i in xlist) /
+                         (len(xlist) - 1))
+    min_value = mean_x - (stddev_x * sigma)
+    max_value = mean_x + (stddev_x * sigma)
+    in_xlist = [i for i in xlist if i > min_value and i < max_value]
+    out_xlist = [i for i in xlist if i < min_value or i > max_value]
+    return in_xlist, out_xlist
+
+
+def get_histogram(xlist, options):
+    if options.histogram_sigma is not None:
+        in_xlist, out_xlist = remove_outliers(xlist, options.histogram_sigma)
+        if (len(xlist) - len(in_xlist)) / len(xlist) > 0.1:
+            dropped_pct = 100. * (len(xlist) - len(in_xlist)) / len(xlist)
+            print('Ignoring sigma removal of outliers (at sigma: %f would be '
+                  'dropping %f%% of the values' % (
+                      sigma, dropped_pct))
+        else:
+            if options.debug > 0:
+                print('Removing %i of %i values sigma: %f stddev: %f '
+                      'range: [%f, %f]' % (
+                          len(xlist) - len(in_xlist),
+                          len(xlist), options.sigma,
+                          stddev_x, min_value, max_value))
+            xlist = in_xlist
+
+    # get the extreme points
+    minx = min(xlist)
+    maxx = max(xlist)
+    # do not bin more than needed
+    nbins = min(options.histogram_bins, len(set(xlist)))
+    bin_size = (maxx - minx) / (nbins - 1)
+    real_xlist = [minx + i * bin_size for i in range(nbins)]
+    border_values = [minx + (i + 0.5) * bin_size for i in range(nbins - 1)]
+    # get the number of values in the histogram
+    ylist = [0] * nbins
+    for x in xlist:
+        i = 0
+        for border_value in border_values:
+            if x < border_value:
+                ylist[i] += 1
+                break
+            i += 1
+        else:
+            ylist[-1] += 1
+    return real_xlist, ylist
 
 
 def read_data(infile, options):
@@ -108,7 +167,10 @@ def read_data(infile, options):
             # parse value
             x = float(value.split(sep2)[options.xcol2])
         # get y component
-        if options.ycol == -1:
+        if options.histogram:
+            # will replace value later
+            y = 0
+        elif options.ycol == -1:
             # use line number
             y = i
         elif options.ycol2 is None:
@@ -126,6 +188,10 @@ def read_data(infile, options):
         # append values
         xlist.append(x)
         ylist.append(y)
+
+    # support for histogram mode
+    if options.histogram:
+        xlist, ylist = get_histogram(xlist, options)
 
     # support for plotting `y[k] - y[k-1]` instead of `y[k]`
     if options.ydelta:
@@ -232,6 +298,19 @@ def get_options(argv):
                         dest='sep2', default=default_values['sep2'],
                         metavar='SEP2',
                         help='use SEP2 as alternate separator',)
+    parser.add_argument('--histogram', action='store_const', const=True,
+                        dest='histogram', default=default_values['histogram'],
+                        help='sort and bin xlist, get ylist as histogram',)
+    parser.add_argument('--histogram-bins', action='store', type=int,
+                        dest='histogram_bins',
+                        default=default_values['histogram-bins'],
+                        metavar='NBINS',
+                        help='use NBINS bins',)
+    parser.add_argument('--histogram-sigma', action='store', type=float,
+                        dest='histogram_sigma',
+                        default=default_values['histogram-sigma'],
+                        metavar='SIGMA',
+                        help='use avg += (SIGMA * stddev) to remove outliers',)
     parser.add_argument('--xlabel', action='store',
                         dest='xlabel', default=default_values['xlabel'],
                         metavar='XLABEL',
@@ -327,7 +406,6 @@ def main(argv):
             ylist = [(y + yshift) for y in ylist]
         create_graph_draw(ax1, xlist, ylist, fmt, label, options)
     create_graph_end(ax1, options)
-    # create_graph(xlist, ylist, options)
 
 
 if __name__ == '__main__':
