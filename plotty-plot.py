@@ -9,7 +9,9 @@
 """
 
 import argparse
+import math
 import matplotlib.pyplot as plt
+import numpy as np
 import sys
 
 
@@ -46,13 +48,15 @@ default_values = {
     'xlim': ['-', '-'],
     'ylim': ['-', '-'],
     'yscale': 'linear',
+    'add_mean': False,
+    'add_median': False,
+    'add_stddev': False,
     'infile': [],
     'outfile': None,
 }
 
 # filter ops
 VALID_OPS = 'eq', 'ne'
-
 
 
 def remove_outliers(xlist, sigma):
@@ -65,24 +69,24 @@ def remove_outliers(xlist, sigma):
     max_value = mean_x + (stddev_x * sigma)
     in_xlist = [i for i in xlist if i > min_value and i < max_value]
     out_xlist = [i for i in xlist if i < min_value or i > max_value]
-    return in_xlist, out_xlist
+    return in_xlist, out_xlist, [min_value, max_value]
 
 
 def get_histogram(xlist, options):
     if options.histogram_sigma is not None:
-        in_xlist, out_xlist = remove_outliers(xlist, options.histogram_sigma)
+        in_xlist, out_xlist, in_range = (
+            remove_outliers(xlist, options.histogram_sigma))
         if (len(xlist) - len(in_xlist)) / len(xlist) > 0.1:
             dropped_pct = 100. * (len(xlist) - len(in_xlist)) / len(xlist)
             print('Ignoring sigma removal of outliers (at sigma: %f would be '
                   'dropping %f%% of the values' % (
-                      sigma, dropped_pct))
+                      options.histogram_sigma, dropped_pct))
         else:
             if options.debug > 0:
-                print('Removing %i of %i values sigma: %f stddev: %f '
-                      'range: [%f, %f]' % (
+                print('Removing %i of %i values sigma: %f range: [%f, %f]' % (
                           len(xlist) - len(in_xlist),
-                          len(xlist), options.sigma,
-                          stddev_x, min_value, max_value))
+                          len(xlist), options.histogram_sigma,
+                          in_range[0], in_range[1]))
             xlist = in_xlist
 
     # get the extreme points
@@ -146,6 +150,7 @@ def read_data(infile, options):
     xlist = []
     ylist = []
     sep2 = options.sep2 if options.sep2 is not None else ' '
+    statistics = {}
     for i, row in enumerate(data):
         if not row:
             # empty row
@@ -191,7 +196,14 @@ def read_data(infile, options):
 
     # support for histogram mode
     if options.histogram:
+        statistics['median'] = np.median(xlist)
+        statistics['mean'] = np.mean(xlist)
+        statistics['stddev'] = np.std(xlist)
         xlist, ylist = get_histogram(xlist, options)
+    else:
+        statistics['median'] = np.median(ylist)
+        statistics['mean'] = np.mean(ylist)
+        statistics['stddev'] = np.std(ylist)
 
     # support for plotting `y[k] - y[k-1]` instead of `y[k]`
     if options.ydelta:
@@ -203,7 +215,7 @@ def read_data(infile, options):
             new_ylist.append(y + prev_y)
         ylist = new_ylist
 
-    return xlist, ylist
+    return xlist, ylist, statistics
 
 
 def create_graph_begin(options):
@@ -222,11 +234,35 @@ def create_graph_begin(options):
     return ax1
 
 
-def create_graph_draw(ax1, xlist, ylist, fmt, label, options):
+def create_graph_draw(ax1, xlist, ylist, statistics, fmt, label, options):
     ax1.plot(xlist, ylist, fmt, label=label)
     if options.debug > 1:
         print('ax1.plot(%r, %r, \'%s\', label=%r)' % (
             list(xlist), ylist, fmt, label))
+    if options.histogram:
+        if options.add_median:
+            plt.axvline(statistics['median'], color=fmt[0], linestyle='dotted',
+                        linewidth=1)
+        if options.add_mean:
+            plt.axvline(statistics['mean'], color=fmt[0], linestyle='dotted',
+                        linewidth=1)
+        if options.add_stddev:
+            plt.axvline(statistics['mean'] + statistics['stddev'],
+                        color=fmt[0], linestyle='dotted', linewidth=1)
+            plt.axvline(statistics['mean'] - statistics['stddev'],
+                        color=fmt[0], linestyle='dotted', linewidth=1)
+    else:
+        if options.add_median:
+            plt.axhline(statistics['median'], color=fmt[0], linestyle='dotted',
+                        linewidth=1)
+        if options.add_mean:
+            plt.axhline(statistics['mean'], color=fmt[0], linestyle='dotted',
+                        linewidth=1)
+        if options.add_stddev:
+            plt.axhline(statistics['mean'] + statistics['stddev'],
+                        color=fmt[0], linestyle='dotted', linewidth=1)
+            plt.axhline(statistics['mean'] - statistics['stddev'],
+                        color=fmt[0], linestyle='dotted', linewidth=1)
 
 
 def create_graph_end(ax1, options):
@@ -334,7 +370,19 @@ def get_options(argv):
     parser.add_argument('--label', action='append',
                         dest='label', default=default_values['label'],
                         metavar='LABEL',
-                        help='use YLABEL label(s)',)
+                        help='use LABEL label(s)',)
+    parser.add_argument('--add-mean', action='store_const',
+                        dest='add_mean', const=True,
+                        default=default_values['add_mean'],
+                        help='Add a line at the mean',)
+    parser.add_argument('--add-median', action='store_const',
+                        dest='add_median', const=True,
+                        default=default_values['add_median'],
+                        help='Add a line at the median',)
+    parser.add_argument('--add-stddev', action='store_const',
+                        dest='add_stddev', const=True,
+                        default=default_values['add_stddev'],
+                        help='Add 2 lines at mean +- stddev',)
     parser.add_argument('--xlim', action='store', type=str, nargs=2,
                         dest='xlim', default=default_values['xlim'],
                         metavar=('left', 'right'),)
@@ -389,7 +437,7 @@ def main(argv):
         xy_data.append(read_data(infile, options))
 
     ax1 = create_graph_begin(options)
-    for index, (xlist, ylist) in enumerate(xy_data):
+    for index, (xlist, ylist, statistics) in enumerate(xy_data):
         fmt = (options.fmt[index] if index < len(options.fmt) else
                DEFAULT_FMT[index])
         label = options.label[index] if index < len(options.label) else ''
@@ -404,7 +452,7 @@ def main(argv):
         if yshift is not None:
             print('shifting y by %f' % yshift)
             ylist = [(y + yshift) for y in ylist]
-        create_graph_draw(ax1, xlist, ylist, fmt, label, options)
+        create_graph_draw(ax1, xlist, ylist, statistics, fmt, label, options)
     create_graph_end(ax1, options)
 
 
