@@ -145,7 +145,7 @@ def parse_data_internal(data, xshift_local=None, yshift_local=None, **kwargs):
     # split the input in lines
     data = data.split('\n')
     # remove comment lines
-    data = [line for line in data if not line.startswith('#')]
+    data = [line for line in data if not line.strip().startswith('#')]
     # break up each line in fields
     sep = kwargs.get('sep', default_values['sep'])
     if sep is None:
