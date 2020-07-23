@@ -43,16 +43,17 @@ default_values = {
     'histogram_ratio': False,
     'xlabel': '--xlabel',
     'ylabel': '--ylabel',
-    'xshift': [],
-    'yshift': [],
-    'label': [],
-    'fmt': [],
     'xlim': ['-', '-'],
     'ylim': ['-', '-'],
     'yscale': 'linear',
     'add_mean': False,
     'add_median': False,
     'add_stddev': False,
+    # per-line parameters
+    'xshift': [],
+    'yshift': [],
+    'label': [],
+    'fmt': [],
     'infile': [],
     'outfile': None,
 }
@@ -74,20 +75,20 @@ def remove_outliers(xlist, sigma):
     return in_xlist, out_xlist, [min_value, max_value]
 
 
-def get_histogram(xlist, options):
-    if options.histogram_sigma is not None:
+def get_histogram(xlist, bins, ratio, sigma, debug):
+    if sigma is not None:
         in_xlist, out_xlist, in_range = (
-            remove_outliers(xlist, options.histogram_sigma))
+            remove_outliers(xlist, sigma))
         if (len(xlist) - len(in_xlist)) / len(xlist) > 0.1:
             dropped_pct = 100. * (len(xlist) - len(in_xlist)) / len(xlist)
             print('Ignoring sigma removal of outliers (at sigma: %f would be '
                   'dropping %f%% of the values' % (
-                      options.histogram_sigma, dropped_pct))
+                      sigma, dropped_pct))
         else:
-            if options.debug > 0:
+            if debug > 0:
                 print('Removing %i of %i values sigma: %f range: [%f, %f]' % (
                           len(xlist) - len(in_xlist),
-                          len(xlist), options.histogram_sigma,
+                          len(xlist), sigma,
                           in_range[0], in_range[1]))
             xlist = in_xlist
 
@@ -95,7 +96,7 @@ def get_histogram(xlist, options):
     minx = min(xlist)
     maxx = max(xlist)
     # do not bin more than needed
-    nbins = min(options.histogram_bins, len(set(xlist)))
+    nbins = min(bins, len(set(xlist)))
     bin_size = (maxx - minx) / (nbins - 1)
     real_xlist = [minx + i * bin_size for i in range(nbins)]
     border_values = [minx + (i + 0.5) * bin_size for i in range(nbins - 1)]
@@ -112,13 +113,13 @@ def get_histogram(xlist, options):
             ylist[-1] += 1
 
     # support for ratio histograms
-    if options.histogram_ratio:
+    if ratio:
         ylist = [(1.0 * y) / sum(ylist) for y in ylist]
 
     return real_xlist, ylist
 
 
-def read_data(infile, options):
+def read_data(infile):
     # open infile
     if infile != sys.stdin:
         try:
@@ -130,24 +131,36 @@ def read_data(infile, options):
 
     # read data
     data = fin.read()
+    return data.decode('ascii')
+
+
+def parse_data(data, xshift_local, yshift_local, options):
+    return parse_data_internal(data, xshift_local, yshift_local,
+                               **vars(options))
+
+
+def parse_data_internal(data, xshift_local=None, yshift_local=None, **kwargs):
+    debug = kwargs.get('debug', default_values['debug'])
 
     # split the input in lines
-    data = data.decode('ascii').split('\n')
+    data = data.split('\n')
     # remove comment lines
     data = [line for line in data if not line.startswith('#')]
     # break up each line in fields
-    if options.sep is None:
+    sep = kwargs.get('sep', default_values['sep'])
+    if sep is None:
         # use space and tab
         data = [item.replace('\t', ' ') for item in data]
-    sep = options.sep if options.sep is not None else ' '
+    sep = sep if sep is not None else ' '
 
-    # filter lines
-    if options.filter:
+    # pre-filter lines
+    prefilter = kwargs.get('filter', default_values['filter'])
+    if prefilter:
         new_data = []
         for row in data:
             if not row:
                 continue
-            for col, op, val in options.filter:
+            for col, op, val in prefilter:
                 field = row.split(sep)[int(col)]
                 if ((op == 'eq' and field == val) or
                         (op == 'ne' and field != val)):
@@ -156,66 +169,88 @@ def read_data(infile, options):
 
     xlist = []
     ylist = []
-    sep2 = options.sep2 if options.sep2 is not None else ' '
+    sep2 = kwargs.get('sep2', default_values['sep2'])
+    sep2 = sep2 if sep2 is not None else ' '
+
     statistics = {}
+    xcol = kwargs.get('xcol', default_values['xcol'])
+    xcol2 = kwargs.get('xcol2', default_values['xcol2'])
+    histogram = kwargs.get('histogram', default_values['histogram'])
+    ycol = kwargs.get('ycol', default_values['ycol'])
+    ycol2 = kwargs.get('ycol2', default_values['ycol2'])
     for i, row in enumerate(data):
         if not row:
             # empty row
             continue
         # get x component
-        if options.xcol == -1:
+        if xcol == -1:
             # use line number
             x = i
-        elif options.xcol2 is None:
+        elif xcol2 is None:
             # use column value
-            x = float(row.split(sep)[options.xcol])
+            x = float(row.split(sep)[xcol])
         else:
             # get column value
-            value = row.split(sep)[options.xcol]
+            value = row.split(sep)[xcol]
             # parse column value
             if not value:
                 # empty column value
                 continue
             # parse value
-            x = float(value.split(sep2)[options.xcol2])
+            x = float(value.split(sep2)[xcol2])
         # get y component
-        if options.histogram:
+        if histogram:
             # will replace value later
             y = 0
-        elif options.ycol == -1:
+        elif ycol == -1:
             # use line number
             y = i
-        elif options.ycol2 is None:
+        elif ycol2 is None:
             # use column value
-            y = float(row.split(sep)[options.ycol])
+            y = float(row.split(sep)[ycol])
         else:
             # get column value
-            value = row.split(sep)[options.ycol]
+            value = row.split(sep)[ycol]
             # parse column value
             if not value:
                 # empty column value
                 continue
             # parse value
-            y = float(value.split(sep2)[options.ycol2])
+            y = float(value.split(sep2)[ycol2])
         # append values
         xlist.append(x)
         ylist.append(y)
 
+    # support for shift modes
+    if xshift_local is not None:
+        xlist = [(x + xshift_local) for x in xlist]
+    if yshift_local is not None:
+        ylist = [(y + yshift_local) for y in ylist]
+
     # support for histogram mode
-    if options.histogram:
+    histogram_bins = kwargs.get('histogram_bins',
+                                default_values['histogram_bins'])
+    histogram_ratio = kwargs.get('histogram_ratio',
+                                 default_values['histogram_ratio'])
+    histogram_sigma = kwargs.get('histogram_sigma',
+                                 default_values['histogram_sigma'])
+    if histogram:
         statistics['median'] = np.median(xlist)
         statistics['mean'] = np.mean(xlist)
         statistics['stddev'] = np.std(xlist)
-        xlist, ylist = get_histogram(xlist, options)
+        xlist, ylist = get_histogram(xlist, histogram_bins, histogram_ratio,
+                                     histogram_sigma, debug)
     else:
         statistics['median'] = np.median(ylist)
         statistics['mean'] = np.mean(ylist)
         statistics['stddev'] = np.std(ylist)
 
     # support for plotting `y[k] - y[k-1]` instead of `y[k]`
-    if options.ydelta:
+    ydelta = kwargs.get('ydelta', default_values['ydelta'])
+    ycumulative = kwargs.get('ycumulative', default_values['ycumulative'])
+    if ydelta:
         ylist = [y1 - y0 for y0, y1 in zip([ylist[0]] + ylist[:-1], ylist)]
-    elif options.ycumulative:
+    elif ycumulative:
         new_ylist = []
         for y in ylist:
             prev_y = new_ylist[-1] if new_ylist else 0
@@ -444,25 +479,22 @@ def main(argv):
         print(options)
     # create the graph
     xy_data = []
-    for infile in options.infile:
-        xy_data.append(read_data(infile, options))
+    for index, infile in enumerate(options.infile):
+        xshift = (float(options.xshift[index]) if index < len(options.xshift)
+                  else None)
+        if xshift is not None:
+            print('shifting x by %f' % xshift)
+        yshift = (float(options.yshift[index]) if index < len(options.yshift)
+                  else None)
+        if yshift is not None:
+            print('shifting y by %f' % yshift)
+        xy_data.append(parse_data(read_data(infile), xshift, yshift, options))
 
     ax1 = create_graph_begin(options)
     for index, (xlist, ylist, statistics) in enumerate(xy_data):
         fmt = (options.fmt[index] if index < len(options.fmt) else
                DEFAULT_FMT[index])
         label = options.label[index] if index < len(options.label) else ''
-        # process shift requests
-        xshift = (float(options.xshift[index]) if index < len(options.xshift)
-                  else None)
-        if xshift is not None:
-            print('shifting x by %f' % xshift)
-            xlist = [(x + xshift) for x in xlist]
-        yshift = (float(options.yshift[index]) if index < len(options.yshift)
-                  else None)
-        if yshift is not None:
-            print('shifting y by %f' % yshift)
-            ylist = [(y + yshift) for y in ylist]
         create_graph_draw(ax1, xlist, ylist, statistics, fmt, label, options)
     create_graph_end(ax1, options)
 
