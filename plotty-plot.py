@@ -97,9 +97,11 @@ def get_histogram(xlist, bins, ratio, sigma, debug):
     maxx = max(xlist)
     # do not bin more than needed
     nbins = min(bins, len(set(xlist)))
-    bin_size = (maxx - minx) / (nbins - 1)
-    real_xlist = [minx + i * bin_size for i in range(nbins)]
-    border_values = [minx + (i + 0.5) * bin_size for i in range(nbins - 1)]
+    bin_size = (maxx - minx) / nbins
+    border_values = [minx + (i + 1) * bin_size for i in range(nbins - 1)]
+    bin_list = [minx, ] + border_values + [maxx, ]
+    real_xlist = [(r + l) / 2.0 for (l, r) in zip(bin_list[:-1], bin_list[1:])]
+
     # get the number of values in the histogram
     ylist = [0] * nbins
     for x in xlist:
@@ -157,6 +159,7 @@ def parse_data_internal(data, xshift_local=None, yshift_local=None, **kwargs):
     prefilter = kwargs.get('filter', default_values['filter'])
     if prefilter:
         new_data = []
+
         for row in data:
             if not row:
                 continue
