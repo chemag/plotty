@@ -31,6 +31,7 @@ default_values = {
     'ylabel': '--ylabel',
     'add_mean': False,
     'add_median': False,
+    'add_stddev': False,
     'label': [],
     'fmt': [],
     'xlim': ['-', '-'],
@@ -141,7 +142,12 @@ def create_graph_draw(ax1, xlist, fmt, label, options):
         plt.axvline(np.median(xlist), color=fmt, linestyle='dotted',
                     linewidth=1)
     if options.add_mean:
-        plt.axvline(np.mean(xlist), color=fmt, linestyle='dashed', linewidth=1)
+        plt.axvline(np.mean(xlist), color=fmt, linestyle='dotted', linewidth=1)
+    if options.add_stddev:
+        mean = np.mean(xlist)
+        stddev = np.std(xlist)
+        plt.axvline(mean + stddev, color=fmt, linestyle='dashdot', linewidth=1)
+        plt.axvline(mean - stddev, color=fmt, linestyle='dashdot', linewidth=1)
 
 
 def create_graph_end(ax1, options):
@@ -219,6 +225,10 @@ def get_options(argv):
                         dest='add_median', const=True,
                         default=default_values['add_median'],
                         help='Add a line at the median',)
+    parser.add_argument('--add-stddev', action='store_const',
+                        dest='add_stddev', const=True,
+                        default=default_values['add_stddev'],
+                        help='Add 2 lines at mean +- stddev',)
     parser.add_argument('--xlim', action='store', type=str, nargs=2,
                         dest='xlim', default=default_values['xlim'],
                         metavar=('left', 'right'),)
