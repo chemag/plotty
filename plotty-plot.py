@@ -194,7 +194,9 @@ def parse_data_internal(data, xshift_local=None, yshift_local=None, **kwargs):
     xcol2 = kwargs.get('xcol2', default_values['xcol2'])
     histogram = kwargs.get('histogram', default_values['histogram'])
     ycol = kwargs.get('ycol', default_values['ycol'])
-    if is_int(ycol):
+    if histogram:
+        pass
+    elif is_int(ycol):
         ycol = int(ycol)
     else:
         # look for named columns
