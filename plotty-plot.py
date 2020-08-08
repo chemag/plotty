@@ -171,8 +171,15 @@ def parse_data_internal(data, xshift_local=None, yshift_local=None, **kwargs):
         for row in data:
             if not row:
                 continue
-            for col, op, val in prefilter:
-                field = row.split(sep)[int(col)]
+            for fcol, op, val in prefilter:
+                if is_int(fcol):
+                    fcol = int(fcol)
+                else:
+                    # look for named columns
+                    assert fcol in column_names, (
+                        'error: invalid fcol name: "%s"' % fcol)
+                    fcol = column_names.index(fcol)
+                field = row.split(sep)[int(fcol)]
                 if ((op == 'eq' and field == val) or
                         (op == 'ne' and field != val)):
                     new_data.append(row)
@@ -478,16 +485,10 @@ def get_options(argv):
     # check the filter
     if options.filter:
 
-        def is_int(s):
-            if s[0] in ('-', '+'):
-                return s[1:].isdigit()
-            return s.isdigit()
-
         def is_op(s):
             return s in VALID_OPS
-        for col, op, val in options.filter:
-            assert is_int(col) and is_op(op), 'invalid filter: %s %s %s' % (
-                col, op, val)
+        for fcol, op, val in options.filter:
+            assert is_op(op), 'invalid filter: %s %s %s' % (fcol, op, val)
     return options
 
 
