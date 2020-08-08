@@ -141,11 +141,19 @@ def parse_data(data, xshift_local, yshift_local, options):
                                **vars(options))
 
 
+def is_int(s):
+    return (s[1:].isdigit() if s[0] in ('-', '+') else s.isdigit())
+
+
 def parse_data_internal(data, xshift_local=None, yshift_local=None, **kwargs):
     debug = kwargs.get('debug', default_values['debug'])
 
     # split the input in lines
     data = data.split('\n')
+    # look for named columns in line 0
+    column_names = []
+    if data[0].strip().startswith('#'):
+        column_names = data[0].strip()[1:].strip().split(',')
     # remove comment lines
     data = [line for line in data if not line.strip().startswith('#')]
     # break up each line in fields
@@ -177,9 +185,21 @@ def parse_data_internal(data, xshift_local=None, yshift_local=None, **kwargs):
 
     statistics = {}
     xcol = kwargs.get('xcol', default_values['xcol'])
+    if is_int(xcol):
+        xcol = int(xcol)
+    else:
+        # look for named columns
+        assert xcol in column_names, 'error: invalid xcol name: "%s"' % xcol
+        xcol = column_names.index(xcol)
     xcol2 = kwargs.get('xcol2', default_values['xcol2'])
     histogram = kwargs.get('histogram', default_values['histogram'])
     ycol = kwargs.get('ycol', default_values['ycol'])
+    if is_int(ycol):
+        ycol = int(ycol)
+    else:
+        # look for named columns
+        assert ycol in column_names, 'error: invalid ycol name: "%s"' % ycol
+        ycol = column_names.index(ycol)
     ycol2 = kwargs.get('ycol2', default_values['ycol2'])
     for i, row in enumerate(data):
         if not row:
@@ -344,7 +364,7 @@ def get_options(argv):
                         dest='title', default=default_values['title'],
                         metavar='PLOTTITLE',
                         help='use PLOTTITLE plot title',)
-    parser.add_argument('--xcol', action='store', type=int,
+    parser.add_argument('--xcol', action='store',
                         dest='xcol', default=default_values['xcol'],
                         metavar='XCOL',
                         help='use XCOL x col',)
@@ -352,7 +372,7 @@ def get_options(argv):
                         dest='xcol2', default=default_values['xcol2'],
                         metavar='XCOL2',
                         help='use XCOL2 for refining x col',)
-    parser.add_argument('--ycol', action='store', type=int,
+    parser.add_argument('--ycol', action='store',
                         dest='ycol', default=default_values['ycol'],
                         metavar='YCOL',
                         help='use YCOL y col',)
