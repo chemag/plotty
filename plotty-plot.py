@@ -62,6 +62,10 @@ default_values = {
 VALID_OPS = 'eq', 'ne'
 
 
+def is_valid_op(s):
+    return s in VALID_OPS
+
+
 def remove_outliers(xlist, sigma):
     # remove values way over the average
     total_x = sum(xlist)
@@ -484,11 +488,9 @@ def get_options(argv):
     options = parser.parse_args(argv[1:])
     # check the filter
     if options.filter:
-
-        def is_op(s):
-            return s in VALID_OPS
         for fcol, op, val in options.filter:
-            assert is_op(op), 'invalid filter: %s %s %s' % (fcol, op, val)
+            assert is_valid_op(op), 'invalid filter: %s %s %s' % (
+                fcol, op, val)
     return options
 
 
