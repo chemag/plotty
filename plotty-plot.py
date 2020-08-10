@@ -79,7 +79,7 @@ def remove_outliers(xlist, sigma):
     return in_xlist, out_xlist, [min_value, max_value]
 
 
-def get_histogram(xlist, bins, ratio, sigma, debug):
+def get_histogram(xlist, nbins, ratio, sigma, debug):
     if sigma is not None:
         in_xlist, out_xlist, in_range = (
             remove_outliers(xlist, sigma))
@@ -100,7 +100,7 @@ def get_histogram(xlist, bins, ratio, sigma, debug):
     minx = min(xlist)
     maxx = max(xlist)
     # do not bin more than needed
-    nbins = min(bins, len(set(xlist)))
+    nbins = min(nbins, len(xlist))
     bin_size = (maxx - minx) / nbins
     border_values = [minx + (i + 1) * bin_size for i in range(nbins - 1)]
     bin_list = [minx, ] + border_values + [maxx, ]
