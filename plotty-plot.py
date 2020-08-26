@@ -33,6 +33,7 @@ default_values = {
     'filter': None,
     'sep': None,
     'sep2': None,
+    'legend_loc': 'upper right',
     # histogram information
     'histogram': False,
     # number of bins for the histogram
@@ -344,7 +345,7 @@ def create_graph_draw(ax1, xlist, ylist, statistics, fmt, label, options):
 
 
 def create_graph_end(ax1, options):
-    _ = ax1.legend(loc='upper right')
+    _ = ax1.legend(loc=options.legend_loc)
 
     # set xlim/ylim
     if options.xlim[0] != '-':
@@ -412,6 +413,10 @@ def get_options(argv):
                         dest='sep2', default=default_values['sep2'],
                         metavar='SEP2',
                         help='use SEP2 as alternate separator',)
+    parser.add_argument('--legend-loc', action='store', type=str,
+                        dest='legend_loc',
+                        default=default_values['legend_loc'],
+                        help='Legend location',)
     parser.add_argument('--histogram', action='store_const', const=True,
                         dest='histogram', default=default_values['histogram'],
                         help='sort and bin xlist, get ylist as histogram',)
