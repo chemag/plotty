@@ -124,7 +124,7 @@ parseDataTestCases = [
             'sep': ',',
             'xcol': 2,
             'histogram': True,
-            'histogram_bins': 2,
+            'histogram-bins': 2,
         },
         'xlist': [1.25, 1.75],
         'ylist': [8.0, 2.0],
@@ -135,7 +135,7 @@ parseDataTestCases = [
             'sep': ',',
             'xcol': 8,
             'histogram': True,
-            'histogram_bins': 2,
+            'histogram-bins': 2,
         },
         'xlist': [2.0, 6.0],
         'ylist': [4.0, 6.0],
@@ -146,7 +146,7 @@ parseDataTestCases = [
             'sep': ',',
             'xcol': 8,
             'histogram': True,
-            'histogram_bins': 4,
+            'histogram-bins': 4,
         },
         'xlist': [1.0, 3.0, 5.0, 7.0],
         'ylist': [2.0, 2.0, 2.0, 4.0],
@@ -157,8 +157,8 @@ parseDataTestCases = [
             'sep': ',',
             'xcol': 8,
             'histogram': True,
-            'histogram_bins': 2,
-            'histogram_ratio': True,
+            'histogram-bins': 2,
+            'histogram-ratio': True,
         },
         'xlist': [2.0, 6.0],
         'ylist': [0.4, 0.6],
@@ -169,8 +169,8 @@ parseDataTestCases = [
             'sep': ',',
             'xcol': 8,
             'histogram': True,
-            'histogram_bins': 4,
-            'histogram_ratio': True,
+            'histogram-bins': 4,
+            'histogram-ratio': True,
         },
         'xlist': [1.0, 3.0, 5.0, 7.0],
         'ylist': [0.2, 0.2, 0.2, 0.4],
@@ -181,8 +181,8 @@ parseDataTestCases = [
             'sep': ',',
             'xcol': 9,
             'histogram': True,
-            'histogram_bins': 2,
-            'histogram_sigma': 2.0,
+            'histogram-bins': 2,
+            'histogram-sigma': 2.0,
         },
         'xlist': [2.0, 6.0],
         'ylist': [4.0, 5.0],
@@ -193,8 +193,8 @@ parseDataTestCases = [
             'sep': ',',
             'xcol': 9,
             'histogram': True,
-            'histogram_bins': 4,
-            'histogram_sigma': 2.0,
+            'histogram-bins': 4,
+            'histogram-sigma': 2.0,
         },
         'xlist': [1.0, 3.0, 5.0, 7.0],
         'ylist': [2.0, 2.0, 2.0, 3.0],
@@ -205,8 +205,8 @@ parseDataTestCases = [
             'sep': ',',
             'xcol': 9,
             'histogram': True,
-            'histogram_bins': 4,
-            'histogram_sigma': 20.0,
+            'histogram-bins': 4,
+            'histogram-sigma': 20.0,
         },
         'xlist': [12.5, 37.5, 62.5, 87.5],
         'ylist': [9.0, 0.0, 0.0, 1.0],
@@ -218,9 +218,26 @@ class MyTest(unittest.TestCase):
 
     def testParseDataBasic(self):
         """Simplest parse_data test."""
+        xshift = 0
+        yshift = 0
         for test_case in parseDataTestCases:
-            xlist, ylist = plotty_plot.parse_data_internal(
-                data, **test_case['parameters'])
+            print('...running %s' % test_case['name'])
+            argv = []
+            for k, v in test_case['parameters'].items():
+                if v is False:
+                    continue
+                argv.append('--%s' % k)
+                if type(v) in (list, tuple):
+                    # flatten the list/tuple
+                    v_flatten = [str(it) for sublist in v for it in sublist]
+                    argv += v_flatten
+                elif v is not True:
+                    argv.append('%s' % v)
+            # add progname and required args
+            argv = ['progname', ] + argv + ['outfile', ]
+            options = plotty_plot.get_options(argv)
+            xlist, ylist = plotty_plot.parse_data(
+                data, xshift, yshift, options)
             msg = 'unittest failed: %s' % test_case['name']
             self.assertEqual(test_case['xlist'], xlist, msg=msg)
             self.assertEqual(test_case['ylist'], ylist, msg=msg)

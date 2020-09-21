@@ -145,14 +145,9 @@ def parse_csv(raw_data, sep):
     # look for named columns in line 0
     column_names = []
     if lines[0].strip().startswith('#'):
-        column_names = lines[0].strip()[1:].strip().split(',')
+        column_names = lines[0].strip()[1:].strip().split(sep)
     # remove comment lines
     lines = [line for line in lines if not line.strip().startswith('#')]
-    # break up each line in fields
-    if sep is None:
-        # use space and tab
-        lines = [item.replace('\t', ' ') for item in lines]
-    sep = sep if sep is not None else ' '
     return column_names, lines
 
 
@@ -219,10 +214,10 @@ def parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2):
 
 def parse_data(raw_data, xshift_local, yshift_local, options):
     prefilter = options.filter
-    sep = options.sep
+    sep = options.sep if options.sep != '' else None
     xcol = options.xcol
     xcol2 = options.xcol2
-    sep2 = options.sep2
+    sep2 = options.sep2 if options.sep2 != '' else None
     # histograms do not need a ycol
     ycol = options.ycol if not options.histogram else xcol
     ycol2 = options.ycol2
@@ -277,7 +272,6 @@ def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
 
     xlist = []
     ylist = []
-    sep2 = sep2 if sep2 is not None else ' '
 
     # get the column IDs
     if is_int(xcol):
