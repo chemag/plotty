@@ -15,14 +15,11 @@ import numpy as np
 import sys
 
 
-DEFAULT_MARKER = '.'
-DEFAULT_COLORS = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
-DEFAULT_FMT = ['%s%s' % (color, DEFAULT_MARKER) for color in DEFAULT_COLORS]
-
 YSCALE_VALUES = ('linear', 'log', 'symlog', 'logit')
 
 default_values = {
     'debug': 0,
+    'marker': '.',
     'title': '--title',
     'xcol': 0,
     'xcol2': None,
@@ -138,126 +135,90 @@ def read_data(infile):
         fin = sys.stdin.buffer
 
     # read data
-    data = fin.read()
-    return data.decode('ascii')
+    raw_data = fin.read()
+    return raw_data.decode('ascii')
 
 
-def parse_data(data, xshift_local, yshift_local, options):
-    return parse_data_internal(data, xshift_local, yshift_local,
-                               **vars(options))
-
-
-def is_int(s):
-    return (s[1:].isdigit() if s[0] in ('-', '+') else s.isdigit())
-
-
-def parse_data_internal(data, xshift_local=None, yshift_local=None, **kwargs):
-    debug = kwargs.get('debug', default_values['debug'])
-
+def parse_csv(raw_data, sep):
     # split the input in lines
-    data = data.split('\n')
+    lines = raw_data.split('\n')
     # look for named columns in line 0
     column_names = []
-    if data[0].strip().startswith('#'):
-        column_names = data[0].strip()[1:].strip().split(',')
+    if lines[0].strip().startswith('#'):
+        column_names = lines[0].strip()[1:].strip().split(',')
     # remove comment lines
-    data = [line for line in data if not line.strip().startswith('#')]
+    lines = [line for line in lines if not line.strip().startswith('#')]
     # break up each line in fields
-    sep = kwargs.get('sep', default_values['sep'])
     if sep is None:
         # use space and tab
-        data = [item.replace('\t', ' ') for item in data]
+        lines = [item.replace('\t', ' ') for item in lines]
     sep = sep if sep is not None else ' '
+    return column_names, lines
 
-    # pre-filter lines
-    prefilter = kwargs.get('filter', default_values['filter'])
-    if prefilter:
-        new_data = []
 
-        for row in data:
-            if not row:
-                continue
-            for fcol, op, val in prefilter:
-                if is_int(fcol):
-                    fcol = int(fcol)
-                else:
-                    # look for named columns
-                    assert fcol in column_names, (
-                        'error: invalid fcol name: "%s"' % fcol)
-                    fcol = column_names.index(fcol)
-                field = row.split(sep)[int(fcol)]
-                if ((op == 'eq' and field == val) or
-                        (op == 'ne' and field != val)):
-                    new_data.append(row)
-        data = new_data
-
-    xlist = []
-    ylist = []
-    sep2 = kwargs.get('sep2', default_values['sep2'])
-    sep2 = sep2 if sep2 is not None else ' '
-
-    statistics = {}
-    xcol = kwargs.get('xcol', default_values['xcol'])
-    if is_int(xcol):
-        xcol = int(xcol)
-    else:
-        # look for named columns
-        assert xcol in column_names, 'error: invalid xcol name: "%s"' % xcol
-        xcol = column_names.index(xcol)
-    xcol2 = kwargs.get('xcol2', default_values['xcol2'])
-    histogram = kwargs.get('histogram', default_values['histogram'])
-    ycol = kwargs.get('ycol', default_values['ycol'])
-    if histogram:
-        pass
-    elif is_int(ycol):
-        ycol = int(ycol)
-    else:
-        # look for named columns
-        assert ycol in column_names, 'error: invalid ycol name: "%s"' % ycol
-        ycol = column_names.index(ycol)
-    ycol2 = kwargs.get('ycol2', default_values['ycol2'])
-    for i, row in enumerate(data):
-        if not row:
-            # empty row
+def filter_lines(lines, sep, prefilter, column_names):
+    new_lines = []
+    for line in lines:
+        if not line:
             continue
-        # get x component
-        if xcol == -1:
-            # use line number
-            x = i
-        elif xcol2 is None:
-            # use column value
-            x = float(row.split(sep)[xcol])
-        else:
-            # get column value
-            value = row.split(sep)[xcol]
-            # parse column value
-            if not value:
-                # empty column value
-                continue
-            # parse value
-            x = float(value.split(sep2)[int(xcol2)])
-        # get y component
-        if histogram:
-            # will replace value later
-            y = 0
-        elif ycol == -1:
-            # use line number
-            y = i
-        elif ycol2 is None:
-            # use column value
-            y = float(row.split(sep)[ycol])
-        else:
-            # get column value
-            value = row.split(sep)[ycol]
-            # parse column value
-            if not value:
-                # empty column value
-                continue
-            # parse value
-            y = float(value.split(sep2)[int(ycol2)])
-        # append values
-        xlist.append(x)
-        ylist.append(y)
+        for fcol, op, val in prefilter:
+            if is_int(fcol):
+                fcol = int(fcol)
+            else:
+                # look for named columns
+                assert fcol in column_names, (
+                    'error: invalid fcol name: "%s"' % fcol)
+                fcol = column_names.index(fcol)
+            field = line.split(sep)[int(fcol)]
+            if ((op == 'eq' and field == val) or
+                    (op == 'ne' and field != val)):
+                new_lines.append(line)
+    return new_lines
+
+
+def get_column(line, sep, col, sep2, col2):
+    if not line:
+        # empty line
+        return None
+    # get component
+    val = line.split(sep)[col]
+    if col2 is not None:
+        # use sep1, then sep2
+        if not val:
+            # empty column value
+            return None
+        # parse value
+        val = val.split(sep2)[int(col2)]
+    return val
+
+
+def parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2):
+    if not line:
+        # empty line
+        return None, None
+
+    # get x component
+    x = i if xcol == -1 else get_column(line, sep, xcol, sep2, xcol2)
+
+    # get y component
+    y = i if ycol == -1 else get_column(line, sep, ycol, sep2, ycol2)
+
+    return x, y
+
+
+def parse_data(raw_data, xshift_local, yshift_local, options):
+    prefilter = options.filter
+    sep = options.sep
+    xcol = options.xcol
+    xcol2 = options.xcol2
+    sep2 = options.sep2
+    # histograms do not need a ycol
+    ycol = options.ycol if not options.histogram else xcol
+    ycol2 = options.ycol2
+
+    # get starting data
+    xlist, ylist = parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
+                                       sep2, xcol2, ycol2)
 
     # support for shift modes
     if xshift_local is not None:
@@ -266,36 +227,70 @@ def parse_data_internal(data, xshift_local=None, yshift_local=None, **kwargs):
         ylist = [(y + yshift_local) for y in ylist]
 
     # support for histogram mode
-    histogram_bins = kwargs.get('histogram_bins',
-                                default_values['histogram_bins'])
-    histogram_ratio = kwargs.get('histogram_ratio',
-                                 default_values['histogram_ratio'])
-    histogram_sigma = kwargs.get('histogram_sigma',
-                                 default_values['histogram_sigma'])
-    if histogram:
-        statistics['median'] = np.median(xlist)
-        statistics['mean'] = np.mean(xlist)
-        statistics['stddev'] = np.std(xlist)
-        xlist, ylist = get_histogram(xlist, histogram_bins, histogram_ratio,
-                                     histogram_sigma, debug)
-    else:
-        statistics['median'] = np.median(ylist)
-        statistics['mean'] = np.mean(ylist)
-        statistics['stddev'] = np.std(ylist)
+    if options.histogram:
+        xlist, ylist = get_histogram(xlist,
+                                     options.histogram_bins,
+                                     options.histogram_ratio,
+                                     options.histogram_sigma,
+                                     options.debug)
 
-    # support for plotting `y[k] - y[k-1]` instead of `y[k]`
-    ydelta = kwargs.get('ydelta', default_values['ydelta'])
-    ycumulative = kwargs.get('ycumulative', default_values['ycumulative'])
-    if ydelta:
+    # support for ydelta (plotting `y[k] - y[k-1]` instead of `y[k]`)
+    if options.ydelta:
         ylist = [y1 - y0 for y0, y1 in zip([ylist[0]] + ylist[:-1], ylist)]
-    elif ycumulative:
+
+    # support for ycumulative (plotting `\Sum y[k]` instead of `y[k]`)
+    if options.ycumulative:
         new_ylist = []
         for y in ylist:
             prev_y = new_ylist[-1] if new_ylist else 0
             new_ylist.append(y + prev_y)
         ylist = new_ylist
 
-    return xlist, ylist, statistics
+    return xlist, ylist
+
+
+def is_int(s):
+    if isinstance(s, int):
+        return True
+    return (s[1:].isdigit() if s[0] in ('-', '+') else s.isdigit())
+
+
+def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
+                        sep2, xcol2, ycol2):
+    # convert the raw data into lines
+    column_names, lines = parse_csv(raw_data, sep)
+
+    # pre-filter lines
+    if prefilter:
+        lines = filter_lines(lines, sep, prefilter, column_names)
+
+    xlist = []
+    ylist = []
+    sep2 = sep2 if sep2 is not None else ' '
+
+    # get the column IDs
+    if is_int(xcol):
+        xcol = int(xcol)
+    else:
+        # look for named columns
+        assert xcol in column_names, 'error: invalid xcol name: "%s"' % xcol
+        xcol = column_names.index(xcol)
+    if is_int(ycol):
+        ycol = int(ycol)
+    else:
+        # look for named columns
+        assert ycol in column_names, 'error: invalid ycol name: "%s"' % ycol
+        ycol = column_names.index(ycol)
+
+    # parse all the lines
+    for i, line in enumerate(lines):
+        x, y = parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2)
+        if x is not None and y is not None:
+            # append values
+            xlist.append(float(x))
+            ylist.append(float(y))
+
+    return xlist, ylist
 
 
 def create_graph_begin(options):
@@ -375,6 +370,10 @@ def get_options(argv):
     parser.add_argument('--quiet', action='store_const',
                         dest='debug', const=-1,
                         help='Zero verbosity',)
+    parser.add_argument('--marker', action='store',
+                        dest='marker', default=default_values['marker'],
+                        metavar='MARKER',
+                        help='use MARKER as plot marker',)
     parser.add_argument('--title', action='store',
                         dest='title', default=default_values['title'],
                         metavar='PLOTTITLE',
@@ -514,10 +513,10 @@ def main(argv):
     if options.debug > 0:
         print(options)
 
-    # get all the input data into xy_data, a list of (xlist, ylist, statistics)
-    # tuples, where `xlist` contains the x-axis values, `ylist` contains the
-    # y-axis values, and `statistics` is a dictionary containing some
-    # statistics about the distribution ('median', 'mean', 'stddev')
+    # get all the input data into xy_data, a list of (xlist, ylist) tuples,
+    # where `xlist` contains the x-axis values, `ylist` contains the y-axis
+    # values
+    fmt_list = ('C%i%s' % (i, options.marker) for i in range(10))
     xy_data = []
     for index, infile in enumerate(options.infile):
         xshift = (float(options.xshift[index]) if index < len(options.xshift)
@@ -528,14 +527,27 @@ def main(argv):
                   else None)
         if yshift is not None:
             print('shifting y by %f' % yshift)
-        xy_data.append(parse_data(read_data(infile), xshift, yshift, options))
+        xlist, ylist = parse_data(read_data(infile), xshift, yshift, options)
+        label = options.label[index] if index < len(options.label) else ''
+        fmt = (options.fmt[index] if index < len(options.fmt) else
+               fmt_list[index])
+        xy_data.append([xlist, ylist, label, fmt])
 
     # create the graph, adding each of the entries in xy_data
     ax1 = create_graph_begin(options)
-    for index, (xlist, ylist, statistics) in enumerate(xy_data):
-        fmt = (options.fmt[index] if index < len(options.fmt) else
-               DEFAULT_FMT[index])
-        label = options.label[index] if index < len(options.label) else ''
+
+    for xlist, ylist, label, fmt in xy_data:
+        # `statistics` is a dictionary containing some statistics about the
+        # distribution ('median', 'mean', 'stddev')
+        statistics = {}
+        if options.histogram:
+            statistics['median'] = np.median(xlist)
+            statistics['mean'] = np.mean(xlist)
+            statistics['stddev'] = np.std(xlist)
+        else:
+            statistics['median'] = np.median(ylist)
+            statistics['mean'] = np.mean(ylist)
+            statistics['stddev'] = np.std(ylist)
         create_graph_draw(ax1, xlist, ylist, statistics, fmt, label, options)
     create_graph_end(ax1, options)
 

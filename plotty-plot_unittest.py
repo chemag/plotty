@@ -208,7 +208,7 @@ class MyTest(unittest.TestCase):
     def testParseDataBasic(self):
         """Simplest parse_data test."""
         for test_case in parseDataTestCases:
-            xlist, ylist, statistics = plotty_plot.parse_data_internal(
+            xlist, ylist = plotty_plot.parse_data_internal(
                 data, **test_case['parameters'])
             msg = 'unittest failed: %s' % test_case['name']
             self.assertEqual(test_case['xlist'], xlist, msg=msg)
