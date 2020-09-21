@@ -235,7 +235,7 @@ def parse_data_internal(data, xshift_local=None, yshift_local=None, **kwargs):
                 # empty column value
                 continue
             # parse value
-            x = float(value.split(sep2)[xcol2])
+            x = float(value.split(sep2)[int(xcol2)])
         # get y component
         if histogram:
             # will replace value later
@@ -254,7 +254,7 @@ def parse_data_internal(data, xshift_local=None, yshift_local=None, **kwargs):
                 # empty column value
                 continue
             # parse value
-            y = float(value.split(sep2)[ycol2])
+            y = float(value.split(sep2)[int(ycol2)])
         # append values
         xlist.append(x)
         ylist.append(y)
