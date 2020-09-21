@@ -157,6 +157,7 @@ def filter_lines(lines, sep, prefilter, column_names):
     for line in lines:
         if not line:
             continue
+        must_keep_line = True
         for fcol, fop, fval in prefilter:
             if is_int(fcol):
                 fcol = int(fcol)
@@ -167,19 +168,22 @@ def filter_lines(lines, sep, prefilter, column_names):
                 fcol = column_names.index(fcol)
             lval = line.split(sep)[int(fcol)]
             # implement eq and ne
-            if ((fop == 'eq' and lval == fval) or
-                    (fop == 'ne' and lval != fval)):
-                new_lines.append(line)
+            if fop in ('eq', 'ne'):
+                if ((fop == 'eq' and lval != fval) or
+                        (fop == 'ne' and lval == fval)):
+                    must_keep_line = False
             # implement gt, ge, lt, le
             elif fop in ('gt', 'ge', 'lt', 'le'):
                 # make sure line val and filter val are numbers
                 lval = float(lval)
                 fval = float(fval)
-                if ((fop == 'ge' and lval >= fval) or
-                        (fop == 'gt' and lval > fval) or
-                        (fop == 'le' and lval <= fval) or
-                        (fop == 'lt' and lval < fval)):
-                    new_lines.append(line)
+                if ((fop == 'ge' and lval < fval) or
+                        (fop == 'gt' and lval <= fval) or
+                        (fop == 'le' and lval > fval) or
+                        (fop == 'lt' and lval >= fval)):
+                    must_keep_line = False
+        if must_keep_line:
+            new_lines.append(line)
     return new_lines
 
 

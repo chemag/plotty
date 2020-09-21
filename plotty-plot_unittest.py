@@ -119,6 +119,20 @@ parseDataTestCases = [
         'ylist': [1.0, 1.0, 1.0, 2.0, 2.0],
     },
     {
+        'name': 'prefilter multiple',
+        'parameters': {
+            'sep': ',',
+            'xcol': 1,
+            'ycol': 2,
+            'filter': (
+                (5, 'gt', '1'),
+                (2, 'ne', '2'),
+            ),
+        },
+        'xlist': [1.0, 1.0, 1.0],
+        'ylist': [1.0, 1.0, 1.0],
+    },
+    {
         'name': 'histogram',
         'parameters': {
             'sep': ',',
@@ -226,12 +240,23 @@ class MyTest(unittest.TestCase):
             for k, v in test_case['parameters'].items():
                 if v is False:
                     continue
-                argv.append('--%s' % k)
                 if type(v) in (list, tuple):
                     # flatten the list/tuple
-                    v_flatten = [str(it) for sublist in v for it in sublist]
-                    argv += v_flatten
-                elif v is not True:
+                    for index, vv in enumerate(v):
+                        if type(vv) not in (list, tuple):
+                            if index == 0:
+                                argv.append('--%s' % k)
+                            # list/tuple of non-lists/non-tuples
+                            argv.append(str(vv))
+                        else:  # list/tuple of lists/tuples
+                            argv.append('--%s' % k)
+                            argv += [str(it) for it in vv]
+                elif type(v) in (bool, ):
+                    if v is True:
+                        # only append the key name
+                        argv.append('--%s' % k)
+                else:
+                    argv.append('--%s' % k)
                     argv.append('%s' % v)
             # add progname and required args
             argv = ['progname', ] + argv + ['outfile', ]
