@@ -513,7 +513,11 @@ def main(argv):
     # print results
     if options.debug > 0:
         print(options)
-    # create the graph
+
+    # get all the input data into xy_data, a list of (xlist, ylist, statistics)
+    # tuples, where `xlist` contains the x-axis values, `ylist` contains the
+    # y-axis values, and `statistics` is a dictionary containing some
+    # statistics about the distribution ('median', 'mean', 'stddev')
     xy_data = []
     for index, infile in enumerate(options.infile):
         xshift = (float(options.xshift[index]) if index < len(options.xshift)
@@ -526,6 +530,7 @@ def main(argv):
             print('shifting y by %f' % yshift)
         xy_data.append(parse_data(read_data(infile), xshift, yshift, options))
 
+    # create the graph, adding each of the entries in xy_data
     ax1 = create_graph_begin(options)
     for index, (xlist, ylist, statistics) in enumerate(xy_data):
         fmt = (options.fmt[index] if index < len(options.fmt) else
