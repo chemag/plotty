@@ -108,6 +108,17 @@ parseDataTestCases = [
         'ylist': [1.0, 1.0, 1.0, 2.0, 2.0],
     },
     {
+        'name': 'prefilter arithmetic',
+        'parameters': {
+            'sep': ',',
+            'xcol': 1,
+            'ycol': 2,
+            'filter': ((5, 'gt', '1'),),
+        },
+        'xlist': [1.0, 1.0, 1.0, 1.0, 1.0],
+        'ylist': [1.0, 1.0, 1.0, 2.0, 2.0],
+    },
+    {
         'name': 'histogram',
         'parameters': {
             'sep': ',',
@@ -213,9 +224,6 @@ class MyTest(unittest.TestCase):
             msg = 'unittest failed: %s' % test_case['name']
             self.assertEqual(test_case['xlist'], xlist, msg=msg)
             self.assertEqual(test_case['ylist'], ylist, msg=msg)
-            if 'statistics' in test_case:
-                for key, val in test_case['statistics']:
-                    self.assertEqual(val, statistics[key], msg=msg)
 
 
 if __name__ == '__main__':

@@ -58,7 +58,7 @@ default_values = {
 }
 
 # filter ops
-VALID_OPS = 'eq', 'ne'
+VALID_OPS = 'eq', 'ne', 'gt', 'ge', 'lt', 'le'
 
 
 def is_valid_op(s):
@@ -161,7 +161,7 @@ def filter_lines(lines, sep, prefilter, column_names):
     for line in lines:
         if not line:
             continue
-        for fcol, op, val in prefilter:
+        for fcol, fop, fval in prefilter:
             if is_int(fcol):
                 fcol = int(fcol)
             else:
@@ -169,10 +169,21 @@ def filter_lines(lines, sep, prefilter, column_names):
                 assert fcol in column_names, (
                     'error: invalid fcol name: "%s"' % fcol)
                 fcol = column_names.index(fcol)
-            field = line.split(sep)[int(fcol)]
-            if ((op == 'eq' and field == val) or
-                    (op == 'ne' and field != val)):
+            lval = line.split(sep)[int(fcol)]
+            # implement eq and ne
+            if ((fop == 'eq' and lval == fval) or
+                    (fop == 'ne' and lval != fval)):
                 new_lines.append(line)
+            # implement gt, ge, lt, le
+            elif fop in ('gt', 'ge', 'lt', 'le'):
+                # make sure line val and filter val are numbers
+                lval = float(lval)
+                fval = float(fval)
+                if ((fop == 'ge' and lval >= fval) or
+                        (fop == 'gt' and lval > fval) or
+                        (fop == 'le' and lval <= fval) or
+                        (fop == 'lt' and lval < fval)):
+                    new_lines.append(line)
     return new_lines
 
 
@@ -495,9 +506,9 @@ def get_options(argv):
     options = parser.parse_args(argv[1:])
     # check the filter
     if options.filter:
-        for fcol, op, val in options.filter:
-            assert is_valid_op(op), 'invalid filter: %s %s %s' % (
-                fcol, op, val)
+        for fcol, fop, fval in options.filter:
+            assert is_valid_op(fop), 'invalid filter: %s %s %s' % (
+                fcol, fop, fval)
     return options
 
 
