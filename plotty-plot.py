@@ -56,6 +56,7 @@ default_values = {
     'label': [],
     'fmt': [],
     'infile': [],
+    # output parameter
     'outfile': None,
 }
 
@@ -442,22 +443,6 @@ def get_options(argv):
                         dest='ylabel', default=default_values['ylabel'],
                         metavar='YLABEL',
                         help='use YLABEL x label',)
-    parser.add_argument('--xshift', action='append',
-                        dest='xshift', default=default_values['xshift'],
-                        metavar='XSHIFT',
-                        help='use XSHIFT x shift(s)',)
-    parser.add_argument('--yshift', action='append',
-                        dest='yshift', default=default_values['yshift'],
-                        metavar='YSHIFT',
-                        help='use YSHIFT y shift(s)',)
-    parser.add_argument('--fmt', action='append',
-                        dest='fmt', default=default_values['fmt'],
-                        metavar='FMT',
-                        help='use FMT format(s)',)
-    parser.add_argument('--label', action='append',
-                        dest='label', default=default_values['label'],
-                        metavar='LABEL',
-                        help='use LABEL label(s)',)
     parser.add_argument('--add-mean', action='store_const',
                         dest='add_mean', const=True,
                         default=default_values['add_mean'],
@@ -481,10 +466,28 @@ def get_options(argv):
                         choices=YSCALE_VALUES,
                         metavar='[%s]' % (' | '.join(YSCALE_VALUES,)),
                              help='yscale values',)
+    # per-line arguments
+    parser.add_argument('--xshift', action='append',
+                        dest='xshift', default=default_values['xshift'],
+                        metavar='XSHIFT',
+                        help='use XSHIFT x shift(s)',)
+    parser.add_argument('--yshift', action='append',
+                        dest='yshift', default=default_values['yshift'],
+                        metavar='YSHIFT',
+                        help='use YSHIFT y shift(s)',)
+    parser.add_argument('--fmt', action='append',
+                        dest='fmt', default=default_values['fmt'],
+                        metavar='FMT',
+                        help='use FMT format(s)',)
+    parser.add_argument('--label', action='append',
+                        dest='label', default=default_values['label'],
+                        metavar='LABEL',
+                        help='use LABEL label(s)',)
     parser.add_argument('-i', '--infile', action='append',
                         default=default_values['infile'],
                         metavar='input-file',
                         help='input file(s)',)
+    # output
     parser.add_argument('outfile', type=str,
                         default=default_values['outfile'],
                         metavar='output-file',
