@@ -28,8 +28,9 @@ default_values = {
     'ydelta': False,
     'ycumulative': False,
     'filter': None,
-    'sep': None,
-    'sep2': None,
+    # use '' to separate using None (any number of spaces/tabs)
+    'sep': ',',
+    'sep2': ',',
     'legend_loc': 'upper right',
     # histogram information
     'histogram': False,
