@@ -228,6 +228,31 @@ parseDataTestCases = [
 ]
 
 
+batch_data = """#comment
+0,foo,file0
+1,bar,file1
+2,bar,file2
+3,bar,file3
+4,bar,file4
+"""
+
+
+BatchProcessDataTestCases = [
+    {
+        'name': 'basic',
+        'parameters': {
+            'sep': ',',
+            'col': 2,
+            'f': (
+                (1, 'eq', 'bar'),
+                (0, 'lt', '3'),
+            ),
+        },
+        'infile_list': ['file1', 'file2']
+    },
+]
+
+
 class MyTest(unittest.TestCase):
 
     def testParseDataBasic(self):
@@ -267,7 +292,15 @@ class MyTest(unittest.TestCase):
             self.assertEqual(test_case['xlist'], xlist, msg=msg)
             self.assertEqual(test_case['ylist'], ylist, msg=msg)
 
+    def testBatchProcessData(self):
+        """Simplest batch_process_data test."""
+        for test_case in BatchProcessDataTestCases:
+            print('...running %s' % test_case['name'])
+            infile_list = plotty_plot.batch_process_data(
+                batch_data, **test_case['parameters'])
+            msg = 'unittest failed: %s' % test_case['name']
+            self.assertEqual(test_case['infile_list'], infile_list, msg=msg)
+
 
 if __name__ == '__main__':
     unittest.main()
-    # plotty_plot.main(sys.argv)

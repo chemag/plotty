@@ -12,6 +12,7 @@ import argparse
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import sys
 
 
@@ -54,6 +55,12 @@ default_values = {
     'label': [],
     'fmt': [],
     'infile': [],
+    # batch conf parameters
+    'batch_infile': None,
+    'batch_sep': ',',
+    'batch_col': None,
+    'batch_label_col': None,
+    'batch_filter': None,
     # output parameter
     'outfile': None,
 }
@@ -496,6 +503,30 @@ def get_options(argv):
                         default=default_values['infile'],
                         metavar='input-file',
                         help='input file(s)',)
+    # batch conf arguments
+    parser.add_argument('--batch-infile', type=str,
+                        default=default_values['batch_infile'],
+                        metavar='batch_infile',
+                        help='conf input file',)
+    parser.add_argument('--batch-sep', action='store', type=str,
+                        dest='batch_sep', default=default_values['batch_sep'],
+                        metavar='SEP',
+                        help='use SEP as separator in the batch file',)
+    parser.add_argument('--batch-col', action='store',
+                        dest='batch_col', default=default_values['batch_col'],
+                        metavar='BATCHCOL',
+                        help='use BATCHCOL batch col',)
+    parser.add_argument('--batch-label-col', action='store',
+                        dest='batch_label_col',
+                        default=default_values['batch_label_col'],
+                        metavar='BATCHLABELCOL',
+                        help='use BATCHLABELCOL batch for label col',)
+    parser.add_argument('--batch-filter', action='append', type=str, nargs=3,
+                        dest='batch_filter',
+                        default=default_values['batch_filter'],
+                        metavar=('COL', 'OP', 'VAL'),
+                        help='select only batch rows where COL OP VAL '
+                        'is true',)
     # output
     parser.add_argument('outfile', type=str,
                         default=default_values['outfile'],
@@ -503,22 +534,88 @@ def get_options(argv):
                         help='output file',)
     # do the parsing
     options = parser.parse_args(argv[1:])
-    # check the filter
-    if options.filter:
-        for fcol, fop, fval in options.filter:
+    # check the filters
+    for f in (options.filter, options.batch_filter):
+        if f is None:
+            continue
+        for fcol, fop, fval in f:
             assert is_valid_op(fop), 'invalid filter: %s %s %s' % (
                 fcol, fop, fval)
     return options
 
 
+def batch_process_file(infile, sep, col, f):
+    flist = batch_process_data(read_data(infile), sep, col, f)
+    # make sure to include infile path
+    dirname = os.path.dirname(infile)
+    if dirname:
+        flist = [os.path.join(dirname, f) for f in flist]
+    return flist
+
+
+def batch_parse_line(line, sep, xcol):
+    if not line:
+        # empty line
+        return None, None
+
+    # get x component
+    x = get_column(line, sep, xcol, None, None)
+
+    return x
+
+
+def batch_process_data(raw_data, sep, col, f):
+    sep = sep if sep != '' else None
+
+    # convert the raw data into lines
+    column_names, lines = parse_csv(raw_data, sep)
+
+    # pre-filter lines
+    if f:
+        lines = filter_lines(lines, sep, f, column_names)
+
+    flist = []
+
+    # get the column IDs
+    if is_int(col):
+        col = int(col)
+    else:
+        # look for named columns
+        assert col in column_names, 'error: invalid col name: "%s"' % col
+        col = column_names.index(col)
+
+    # parse all the lines
+    for line in lines:
+        f = batch_parse_line(line, sep, col)
+        if f is not None:
+            # append values
+            flist.append(f)
+
+    return flist
+
+
 def main(argv):
     # parse options
     options = get_options(argv)
+
     # get infile(s)/outfile
-    options.infile = [(sys.stdin if name == '-' else name) for name in
-                      options.infile]
+    label_list = []
+    fmt_list = []
+    if options.batch_infile is not None:
+        infile_list = batch_process_file(
+            options.batch_infile, options.batch_sep, options.batch_col,
+            options.batch_filter)
+        label_list = batch_process_data(
+            read_data(options.batch_infile), options.batch_sep,
+            options.batch_label_col, options.batch_filter)
+    else:
+        infile_list = [(sys.stdin if name == '-' else name) for name in
+                       options.infile]
+        label_list = options.label
+        fmt_list = options.fmt
     if options.outfile == '-':
         options.outfile = sys.stdout
+
     # print results
     if options.debug > 0:
         print(options)
@@ -526,9 +623,13 @@ def main(argv):
     # get all the input data into xy_data, a list of (xlist, ylist) tuples,
     # where `xlist` contains the x-axis values, `ylist` contains the y-axis
     # values
-    fmt_list = ('C%i%s' % (i, options.marker) for i in range(10))
+    default_label_list = [(
+        os.path.basename(infile) if infile != sys.stdin else 'stdin')
+        for infile in infile_list]
+    default_fmt_list = ['C%i%s' % (i % 10, options.marker) for i in
+                        range(len(infile_list))]
     xy_data = []
-    for index, infile in enumerate(options.infile):
+    for index, infile in enumerate(infile_list):
         xshift = (float(options.xshift[index]) if index < len(options.xshift)
                   else None)
         if xshift is not None:
@@ -538,9 +639,10 @@ def main(argv):
         if yshift is not None:
             print('shifting y by %f' % yshift)
         xlist, ylist = parse_data(read_data(infile), xshift, yshift, options)
-        label = options.label[index] if index < len(options.label) else ''
-        fmt = (options.fmt[index] if index < len(options.fmt) else
-               fmt_list[index])
+        label = (label_list[index] if index < len(label_list) else
+                 default_label_list[index])
+        fmt = (fmt_list[index] if index < len(fmt_list) else
+               default_fmt_list[index])
         xy_data.append([xlist, ylist, label, fmt])
 
     # create the graph, adding each of the entries in xy_data
