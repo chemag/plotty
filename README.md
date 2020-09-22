@@ -17,7 +17,7 @@ $ echo -e "1,2\n2,2\n3,5\n4,7\n5,1\n" | ./plotty-plot.py -i - /tmp/plot.png
 output is /tmp/plot.png
 ```
 
-[Image: image/plot.png]
+![Figure 1](image/plot.png)
 
 Figure 1 shows the output file of the plot command.
 
@@ -107,7 +107,7 @@ $ echo -e "1\n2\n1\n2\n3\n1\n4\n" | ./plotty-histogram.py -i - /tmp/histo.png
 output is /tmp/histo.png
 ```
 
-[Image: image/histo.png]
+![Figure 2](image/histo.png)
 
 Figure 2 shows the output file of the histogram command.
 
@@ -131,7 +131,7 @@ $ ~/proj/plotty/plotty-plot.py -d --xcol frame_time_relative \
     --batch-filter id gt 44 out.png
 ```
 
-[Image: image/batch.png]
+![Figure 3](image/batch.png)
 
 Figure 3 shows the output file of the batch command.
 
