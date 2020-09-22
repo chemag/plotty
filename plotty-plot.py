@@ -10,6 +10,7 @@
 
 import argparse
 import math
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -21,6 +22,7 @@ YSCALE_VALUES = ('linear', 'log', 'symlog', 'logit')
 default_values = {
     'debug': 0,
     'marker': '.',
+    'figsize': matplotlib.rcParams['figure.figsize'],
     'title': '--title',
     'xcol': 0,
     'xcol2': None,
@@ -312,7 +314,8 @@ def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
 
 def create_graph_begin(options):
     # create figure
-    fig = plt.figure()
+    figsize = tuple(float(v) for v in options.figsize)
+    fig = plt.figure(figsize=figsize)
     # plt.gca().set_xlim([xstart, xstart + 1100000000])
     # plt.gca().set_ylim([0, 100])
     # # add a vertical line
@@ -391,6 +394,10 @@ def get_options(argv):
                         dest='marker', default=default_values['marker'],
                         metavar='MARKER',
                         help='use MARKER as plot marker',)
+    parser.add_argument('--figsize', action='store', type=str, nargs=2,
+                        dest='figsize', default=default_values['figsize'],
+                        metavar=('WIDTH', 'HEIGHT'),
+                        help='set figsize to WIDTH x HEIGHT',)
     parser.add_argument('--title', action='store',
                         dest='title', default=default_values['title'],
                         metavar='PLOTTITLE',
