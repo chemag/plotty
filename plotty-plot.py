@@ -5,7 +5,7 @@
 # http://stackoverflow.com/a/11249340
 
 # runme
-# $ echo -e "1 2\n2 2\n3 5\n4 7\n5 1\n" | ./plotty-plot.py -i - /tmp/foo.png
+# $ echo -e "1,2\n2,2\n3,5\n4,7\n5,1\n" | ./plotty-plot.py -i - /tmp/plot.png
 """
 
 import argparse
