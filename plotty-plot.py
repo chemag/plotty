@@ -606,20 +606,19 @@ def main(argv):
     options = get_options(argv)
 
     # get infile(s)/outfile
-    label_list = []
-    fmt_list = []
+    batch_label_list = []
     if options.batch_infile is not None:
         infile_list = batch_process_file(
             options.batch_infile, options.batch_sep, options.batch_col,
             options.batch_filter)
-        label_list = batch_process_data(
+        batch_label_list = batch_process_data(
             read_data(options.batch_infile), options.batch_sep,
             options.batch_label_col, options.batch_filter)
     else:
         infile_list = [(sys.stdin if name == '-' else name) for name in
                        options.infile]
-        label_list = options.label
-        fmt_list = options.fmt
+    options_label_list = options.label
+    options_fmt_list = options.fmt
     if options.outfile == '-':
         options.outfile = sys.stdout
 
@@ -646,10 +645,17 @@ def main(argv):
         if yshift is not None:
             print('shifting y by %f' % yshift)
         xlist, ylist = parse_data(read_data(infile), xshift, yshift, options)
-        label = (label_list[index] if index < len(label_list) else
-                 default_label_list[index])
-        fmt = (fmt_list[index] if index < len(fmt_list) else
-               default_fmt_list[index])
+        # set the label and the fmt
+        if index < len(options_label_list):
+            label = options_label_list[index]
+        elif index < len(batch_label_list):
+            label = batch_label_list[index]
+        else:
+            label = default_label_list[index]
+        if index < len(options_fmt_list):
+            fmt = options_fmt_list[index]
+        else:
+            fmt = default_fmt_list[index]
         xy_data.append([xlist, ylist, label, fmt])
 
     # create the graph, adding each of the entries in xy_data
