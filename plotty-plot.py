@@ -41,6 +41,8 @@ default_values = {
     'histogram': False,
     # number of bins for the histogram
     'histogram_bins': 50,
+    # filter out zeroes
+    'histogram_nozeroes': False,
     # filter outliers
     'histogram_sigma': None,
     # use relative values
@@ -90,7 +92,7 @@ def remove_outliers(xlist, sigma):
     return in_xlist, out_xlist, [min_value, max_value]
 
 
-def get_histogram(xlist, nbins, ratio, sigma, debug):
+def get_histogram(xlist, nbins, ratio, nozeroes, sigma, debug):
     if sigma is not None:
         in_xlist, out_xlist, in_range = (
             remove_outliers(xlist, sigma))
@@ -132,6 +134,10 @@ def get_histogram(xlist, nbins, ratio, sigma, debug):
     # support for ratio histograms
     if ratio:
         ylist = [(1.0 * y) / sum(ylist) for y in ylist]
+
+    if nozeroes:
+        real_xlist, ylist = zip(*[(x, y) for x, y in zip(real_xlist, ylist)
+                                if y != 0])
 
     return real_xlist, ylist
 
@@ -253,6 +259,7 @@ def parse_data(raw_data, xshift_local, yshift_local, options):
         xlist, ylist = get_histogram(xlist,
                                      options.histogram_bins,
                                      options.histogram_ratio,
+                                     options.histogram_nozeroes,
                                      options.histogram_sigma,
                                      options.debug)
 
@@ -451,6 +458,11 @@ def get_options(argv):
                         default=default_values['histogram_bins'],
                         metavar='NBINS',
                         help='use NBINS bins',)
+    parser.add_argument('--histogram-nozeroes', action='store_const',
+                        const=True,
+                        dest='histogram_nozeroes',
+                        default=default_values['histogram_nozeroes'],
+                        help='remove zeroes on the histogram',)
     parser.add_argument('--histogram-sigma', action='store', type=float,
                         dest='histogram_sigma',
                         default=default_values['histogram_sigma'],
