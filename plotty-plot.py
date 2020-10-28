@@ -353,35 +353,40 @@ def create_graph_begin(options):
     return ax1
 
 
+def matplotlib_fmt_to_color(fmt):
+    return fmt[:-1]
+
+
 def create_graph_draw(ax1, xlist, ylist, statistics, fmt, label, options):
     ax1.plot(xlist, ylist, fmt, label=label)
     if options.debug > 1:
         print('ax1.plot(%r, %r, \'%s\', label=%r)' % (
             list(xlist), ylist, fmt, label))
+    color = matplotlib_fmt_to_color(fmt)
     if options.histogram:
         if options.add_median:
-            plt.axvline(statistics['median'], color=fmt[0], linestyle='dotted',
+            plt.axvline(statistics['median'], color=color, linestyle='dotted',
                         linewidth=1)
         if options.add_mean:
-            plt.axvline(statistics['mean'], color=fmt[0], linestyle='dotted',
+            plt.axvline(statistics['mean'], color=color, linestyle='dotted',
                         linewidth=1)
         if options.add_stddev:
             plt.axvline(statistics['mean'] + statistics['stddev'],
-                        color=fmt[0], linestyle='dotted', linewidth=1)
+                        color=color, linestyle='dotted', linewidth=1)
             plt.axvline(statistics['mean'] - statistics['stddev'],
-                        color=fmt[0], linestyle='dotted', linewidth=1)
+                        color=color, linestyle='dotted', linewidth=1)
     else:
         if options.add_median:
-            plt.axhline(statistics['median'], color=fmt[0], linestyle='dotted',
+            plt.axhline(statistics['median'], color=color, linestyle='dotted',
                         linewidth=1)
         if options.add_mean:
-            plt.axhline(statistics['mean'], color=fmt[0], linestyle='dotted',
+            plt.axhline(statistics['mean'], color=color, linestyle='dotted',
                         linewidth=1)
         if options.add_stddev:
             plt.axhline(statistics['mean'] + statistics['stddev'],
-                        color=fmt[0], linestyle='dotted', linewidth=1)
+                        color=color, linestyle='dotted', linewidth=1)
             plt.axhline(statistics['mean'] - statistics['stddev'],
-                        color=fmt[0], linestyle='dotted', linewidth=1)
+                        color=color, linestyle='dotted', linewidth=1)
 
 
 def create_graph_end(ax1, options):
