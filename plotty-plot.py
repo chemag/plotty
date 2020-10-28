@@ -20,6 +20,21 @@ import sys
 __version__ = '0.1'
 
 YSCALE_VALUES = ('linear', 'log', 'symlog', 'logit')
+VALID_LEGEND_LOCS = (
+    'none',
+    'best',
+    'upper right',
+    'upper left',
+    'lower left',
+    'lower right',
+    'right',
+    'center left',
+    'center right',
+    'lower center',
+    'upper center',
+    'center',
+)
+
 
 default_values = {
     'debug': 0,
@@ -370,7 +385,8 @@ def create_graph_draw(ax1, xlist, ylist, statistics, fmt, label, options):
 
 
 def create_graph_end(ax1, options):
-    _ = ax1.legend(loc=options.legend_loc)
+    if options.legend_loc != 'none':
+        _ = ax1.legend(loc=options.legend_loc)
 
     # set xlim/ylim
     if options.xlim[0] != '-':
@@ -449,6 +465,8 @@ def get_options(argv):
     parser.add_argument('--legend-loc', action='store', type=str,
                         dest='legend_loc',
                         default=default_values['legend_loc'],
+                        choices=VALID_LEGEND_LOCS,
+                        metavar='[%s]' % (' | '.join(VALID_LEGEND_LOCS,)),
                         help='Legend location',)
     parser.add_argument('--histogram', action='store_const', const=True,
                         dest='histogram', default=default_values['histogram'],
