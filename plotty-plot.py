@@ -36,6 +36,19 @@ VALID_LEGEND_LOCS = (
 )
 
 
+# https://matplotlib.org/2.0.2/api/colors_api.html
+VALID_MATPLOTLIB_COLORS = {
+    'b': 'blue',
+    'g': 'green',
+    'r': 'red',
+    'c': 'cyan',
+    'm': 'magenta',
+    'y': 'yellow',
+    'k': 'black',
+    'w': 'white',
+}
+
+
 default_values = {
     'debug': 0,
     'marker': '.',
@@ -354,7 +367,18 @@ def create_graph_begin(options):
 
 
 def matplotlib_fmt_to_color(fmt):
-    return fmt[:-1]
+    # valid colors:
+    # (1) single letter (e.g. 'b'),
+    if len(fmt) >= 1 and fmt[0] in VALID_MATPLOTLIB_COLORS.keys():
+        return fmt[0]
+    # (2) full color name (e.g. 'blue'), or
+    for color in VALID_MATPLOTLIB_COLORS.values():
+        if fmt.startswith(color):
+            return color
+    # (3) pre-defined color (e.g. 'C0')
+    if len(fmt) >= 2 and fmt[0] == 'C' and fmt[1].isdigit():
+        return fmt[:2]
+    return fmt
 
 
 def create_graph_draw(ax1, xlist, ylist, statistics, fmt, label, options):
@@ -363,6 +387,7 @@ def create_graph_draw(ax1, xlist, ylist, statistics, fmt, label, options):
         print('ax1.plot(%r, %r, \'%s\', label=%r)' % (
             list(xlist), ylist, fmt, label))
     color = matplotlib_fmt_to_color(fmt)
+
     if options.histogram:
         if options.add_median:
             plt.axvline(statistics['median'], color=color, linestyle='dotted',
