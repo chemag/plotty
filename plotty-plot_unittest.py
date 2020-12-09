@@ -9,6 +9,7 @@
 """
 
 import importlib
+import math
 import unittest
 
 plotty_plot = importlib.import_module('plotty-plot')
@@ -37,6 +38,7 @@ parseDataTestCases = [
         },
         'xlist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
         'ylist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0],
+        'statistics': {'median': 1.0, 'mean': 1.2, 'stddev': 0.4}
     },
     {
         'name': '[x|y]col == -1 implies line number',
@@ -47,6 +49,7 @@ parseDataTestCases = [
         },
         'xlist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
         'ylist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+        'statistics': {'median': 1.0, 'mean': 1.0, 'stddev': 0.0}
     },
     {
         'name': 'xcol2',
@@ -60,6 +63,7 @@ parseDataTestCases = [
         'xlist': [0.0, 111.0, 222.0, 333.0, 444.0, 555.0, 666.0, 777.0,
                   888.0, 999.0],
         'ylist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0],
+        'statistics': {'median': 1.0, 'mean': 1.2, 'stddev': 0.4}
     },
     {
         'name': 'ycol2, swapping separators',
@@ -73,6 +77,7 @@ parseDataTestCases = [
         },
         'xlist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
         'ylist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 8.0],
+        'statistics': {'median': 4.5, 'mean': 4.4, 'stddev': 2.72764}
     },
     {
         'name': 'ydelta',
@@ -84,6 +89,7 @@ parseDataTestCases = [
         },
         'xlist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
         'ylist': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+        'statistics': {'median': 0.0, 'mean': 0.1, 'stddev': 0.3}
     },
     {
         'name': 'ycumulative',
@@ -95,6 +101,7 @@ parseDataTestCases = [
         },
         'xlist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
         'ylist': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0, 12.0],
+        'statistics': {'median': 5.5, 'mean': 5.8, 'stddev': 3.34066}
     },
     {
         'name': 'prefilter',
@@ -106,6 +113,7 @@ parseDataTestCases = [
         },
         'xlist': [1.0, 1.0, 1.0, 1.0, 1.0],
         'ylist': [1.0, 1.0, 1.0, 2.0, 2.0],
+        'statistics': {'median': 1.0, 'mean': 1.4, 'stddev': 0.4899}
     },
     {
         'name': 'prefilter arithmetic',
@@ -117,6 +125,8 @@ parseDataTestCases = [
         },
         'xlist': [1.0, 1.0, 1.0, 1.0, 1.0],
         'ylist': [1.0, 1.0, 1.0, 2.0, 2.0],
+        'statistics': {'median': 1.0, 'mean': 1.4, 'stddev': 0.4899}
+
     },
     {
         'name': 'prefilter multiple',
@@ -131,6 +141,7 @@ parseDataTestCases = [
         },
         'xlist': [1.0, 1.0, 1.0],
         'ylist': [1.0, 1.0, 1.0],
+        'statistics': {'median': 1.0, 'mean': 1.0, 'stddev': 0.0}
     },
     {
         'name': 'histogram',
@@ -142,6 +153,7 @@ parseDataTestCases = [
         },
         'xlist': [1.25, 1.75],
         'ylist': [8.0, 2.0],
+        'statistics': {'median': 1.0, 'mean': 1.2, 'stddev': 0.4}
     },
     {
         'name': 'histogram bins 1',
@@ -153,6 +165,8 @@ parseDataTestCases = [
         },
         'xlist': [2.0, 6.0],
         'ylist': [4.0, 6.0],
+        'statistics': {'median': 4.5, 'mean': 4.4, 'stddev': 2.72764}
+
     },
     {
         'name': 'histogram bins 2',
@@ -164,6 +178,7 @@ parseDataTestCases = [
         },
         'xlist': [1.0, 3.0, 5.0, 7.0],
         'ylist': [2.0, 2.0, 2.0, 4.0],
+        'statistics': {'median': 4.5, 'mean': 4.4, 'stddev': 2.72764}
     },
     {
         'name': 'histogram ratio 1',
@@ -176,6 +191,7 @@ parseDataTestCases = [
         },
         'xlist': [2.0, 6.0],
         'ylist': [0.4, 0.6],
+        'statistics': {'median': 4.5, 'mean': 4.4, 'stddev': 2.72764}
     },
     {
         'name': 'histogram ratio 2',
@@ -188,6 +204,7 @@ parseDataTestCases = [
         },
         'xlist': [1.0, 3.0, 5.0, 7.0],
         'ylist': [0.2, 0.2, 0.2, 0.4],
+        'statistics': {'median': 4.5, 'mean': 4.4, 'stddev': 2.72764}
     },
     {
         'name': 'histogram sigma 1',
@@ -200,6 +217,7 @@ parseDataTestCases = [
         },
         'xlist': [2.0, 6.0],
         'ylist': [4.0, 5.0],
+        'statistics': {'median': 4.5, 'mean': 13.6, 'stddev': 28.904}
     },
     {
         'name': 'histogram sigma 2',
@@ -212,6 +230,7 @@ parseDataTestCases = [
         },
         'xlist': [1.0, 3.0, 5.0, 7.0],
         'ylist': [2.0, 2.0, 2.0, 3.0],
+        'statistics': {'median': 4.5, 'mean': 13.6, 'stddev': 28.904}
     },
     {
         'name': 'histogram sigma 2b',
@@ -224,6 +243,7 @@ parseDataTestCases = [
         },
         'xlist': [12.5, 37.5, 62.5, 87.5],
         'ylist': [9.0, 0.0, 0.0, 1.0],
+        'statistics': {'median': 4.5, 'mean': 13.6, 'stddev': 28.904}
     },
 ]
 
@@ -251,6 +271,18 @@ BatchProcessDataTestCases = [
         'infile_list': ['file1', 'file2']
     },
 ]
+
+
+def statisticsIsClose(d1, d2):
+    # make sure keys are the same
+    if set(d1.keys()) != set(d2.keys()):
+        return False
+    # make sure elements are close enough same
+    rel_tol = 1e-3
+    for k in d1.keys():
+        if not math.isclose(d1[k], d2[k], rel_tol=rel_tol):
+            return False
+    return True
 
 
 class MyTest(unittest.TestCase):
@@ -286,11 +318,13 @@ class MyTest(unittest.TestCase):
             # add progname and required args
             argv = ['progname', ] + argv + ['outfile', ]
             options = plotty_plot.get_options(argv)
-            xlist, ylist = plotty_plot.parse_data(
+            xlist, ylist, statistics = plotty_plot.parse_data(
                 data, xshift, yshift, options)
             msg = 'unittest failed: %s' % test_case['name']
             self.assertEqual(test_case['xlist'], xlist, msg=msg)
             self.assertEqual(test_case['ylist'], ylist, msg=msg)
+            self.assertTrue(statisticsIsClose(test_case['statistics'],
+                                              statistics), msg=msg)
 
     def testBatchProcessData(self):
         """Simplest batch_process_data test."""

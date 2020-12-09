@@ -282,15 +282,6 @@ def parse_data(raw_data, xshift_local, yshift_local, options):
     if yshift_local is not None:
         ylist = [(y + yshift_local) for y in ylist]
 
-    # support for histogram mode
-    if options.histogram:
-        xlist, ylist = get_histogram(xlist,
-                                     options.histogram_bins,
-                                     options.histogram_ratio,
-                                     options.histogram_nozeroes,
-                                     options.histogram_sigma,
-                                     options.debug)
-
     # support for ydelta (plotting `y[k] - y[k-1]` instead of `y[k]`)
     if options.ydelta:
         ylist = [y1 - y0 for y0, y1 in zip([ylist[0]] + ylist[:-1], ylist)]
@@ -303,7 +294,28 @@ def parse_data(raw_data, xshift_local, yshift_local, options):
             new_ylist.append(y + prev_y)
         ylist = new_ylist
 
-    return xlist, ylist
+    # `statistics` is a dictionary containing some statistics about the
+    # distribution ('median', 'mean', 'stddev')
+    statistics = {}
+
+    # support for histogram mode
+    if options.histogram:
+        # calculate the histogram distro before binning the data
+        statistics['median'] = np.median(xlist)
+        statistics['mean'] = np.mean(xlist)
+        statistics['stddev'] = np.std(xlist)
+        xlist, ylist = get_histogram(xlist,
+                                     options.histogram_bins,
+                                     options.histogram_ratio,
+                                     options.histogram_nozeroes,
+                                     options.histogram_sigma,
+                                     options.debug)
+    else:
+        statistics['median'] = np.median(ylist)
+        statistics['mean'] = np.mean(ylist)
+        statistics['stddev'] = np.std(ylist)
+
+    return xlist, ylist, statistics
 
 
 def is_int(s):
@@ -706,7 +718,8 @@ def main(argv):
                   else None)
         if yshift is not None:
             print('shifting y by %f' % yshift)
-        xlist, ylist = parse_data(read_data(infile), xshift, yshift, options)
+        xlist, ylist, statistics = parse_data(read_data(infile), xshift,
+                                              yshift, options)
         # set the label and the fmt
         if index < len(options_label_list):
             label = options_label_list[index]
@@ -718,23 +731,12 @@ def main(argv):
             fmt = options_fmt_list[index]
         else:
             fmt = default_fmt_list[index]
-        xy_data.append([xlist, ylist, label, fmt])
+        xy_data.append([xlist, ylist, statistics, label, fmt])
 
     # create the graph, adding each of the entries in xy_data
     ax1 = create_graph_begin(options)
 
-    for xlist, ylist, label, fmt in xy_data:
-        # `statistics` is a dictionary containing some statistics about the
-        # distribution ('median', 'mean', 'stddev')
-        statistics = {}
-        if options.histogram:
-            statistics['median'] = np.median(xlist)
-            statistics['mean'] = np.mean(xlist)
-            statistics['stddev'] = np.std(xlist)
-        else:
-            statistics['median'] = np.median(ylist)
-            statistics['mean'] = np.mean(ylist)
-            statistics['stddev'] = np.std(ylist)
+    for xlist, ylist, statistics, label, fmt in xy_data:
         create_graph_draw(ax1, xlist, ylist, statistics, fmt, label, options)
     create_graph_end(ax1, options)
 
