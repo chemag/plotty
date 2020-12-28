@@ -172,17 +172,12 @@ def get_histogram(xlist, nbins, ratio, nozeroes, sigma, debug):
 
 def read_data(infile):
     # open infile
-    if infile != sys.stdin:
-        try:
-            fin = open(infile, 'rb+')
-        except IOError:
-            print('Error: cannot open file "%s":', infile)
-    else:
-        fin = sys.stdin.buffer
-
-    # read data
-    raw_data = fin.read()
-    return raw_data.decode('ascii')
+    if infile == '-':
+        infile = '/dev/fd/0'
+    with open(infile, 'r') as fin:
+        # read data
+        raw_data = fin.read()
+    return raw_data
 
 
 def parse_csv(raw_data, sep):
@@ -689,12 +684,12 @@ def main(argv):
             read_data(options.batch_infile), options.batch_sep,
             options.batch_label_col, options.batch_filter)
     else:
-        infile_list = [(sys.stdin if name == '-' else name) for name in
+        infile_list = [('/dev/fd/0' if name == '-' else name) for name in
                        options.infile]
     options_label_list = options.label
     options_fmt_list = options.fmt
     if options.outfile == '-':
-        options.outfile = sys.stdout
+        options.outfile = '/dev/fd/1'
 
     # print results
     if options.debug > 0:
@@ -704,7 +699,7 @@ def main(argv):
     # where `xlist` contains the x-axis values, `ylist` contains the y-axis
     # values
     default_label_list = [(
-        os.path.basename(infile) if infile != sys.stdin else 'stdin')
+        os.path.basename(infile) if infile != '/dev/fd/0' else 'stdin')
         for infile in infile_list]
     default_fmt_list = ['C%i%s' % (i % 10, options.marker) for i in
                         range(len(infile_list))]
