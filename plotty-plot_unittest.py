@@ -316,7 +316,7 @@ class MyTest(unittest.TestCase):
                     argv.append('--%s' % k)
                     argv.append('%s' % v)
             # add progname and required args
-            argv = ['progname', ] + argv + ['outfile', ]
+            argv = ['progname', ] + argv + ['-i', '/dev/null', 'outfile', ]
             options = plotty_plot.get_options(argv)
             xlist, ylist, statistics = plotty_plot.parse_data(
                 data, xshift, yshift, options)
