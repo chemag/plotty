@@ -9,9 +9,11 @@
 """
 
 import argparse
+import datetime
 import math
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.dates as md
 import numpy as np
 import os
 import sys
@@ -49,6 +51,9 @@ VALID_MATPLOTLIB_COLORS = {
 }
 
 
+VALID_COLUMN_FMTS = ('float', 'int', 'unix')
+
+
 default_values = {
     'debug': 0,
     'marker': '.',
@@ -58,6 +63,8 @@ default_values = {
     'xcol2': None,
     'ycol': 1,
     'ycol2': None,
+    'xfmt': 'float',
+    'yfmt': 'float',
     'ydelta': False,
     'ycumulative': False,
     'filter': None,
@@ -266,10 +273,12 @@ def parse_data(raw_data, xshift_local, yshift_local, options):
     # histograms do not need a ycol
     ycol = options.ycol if not options.histogram else xcol
     ycol2 = options.ycol2
+    xfmt = options.xfmt
+    yfmt = options.yfmt
 
     # get starting data
     xlist, ylist = parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
-                                       sep2, xcol2, ycol2)
+                                       sep2, xcol2, ycol2, xfmt, yfmt)
 
     # support for shift modes
     if xshift_local is not None:
@@ -319,8 +328,19 @@ def is_int(s):
     return (s[1:].isdigit() if s[0] in ('-', '+') else s.isdigit())
 
 
+def fmt_convert(item, fmt):
+    if fmt == 'int':
+        return int(float(item))
+    elif fmt == 'float':
+        return float(item)
+    elif fmt == 'unix':
+        # convert unix timestamp to matplotlib datenum
+        return md.date2num(datetime.datetime.fromtimestamp(float(item)))
+    raise 'Error: invalid fmt (%s)' % fmt
+
+
 def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
-                        sep2, xcol2, ycol2):
+                        sep2, xcol2, ycol2, xfmt, yfmt):
     # convert the raw data into lines
     column_names, lines = parse_csv(raw_data, sep)
 
@@ -350,9 +370,8 @@ def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
         x, y = parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2)
         if x is not None and y is not None:
             # append values
-            xlist.append(float(x))
-            ylist.append(float(y))
-
+            xlist.append(fmt_convert(x, xfmt))
+            ylist.append(fmt_convert(y, yfmt))
     return xlist, ylist
 
 
@@ -370,6 +389,9 @@ def create_graph_begin(options):
     ax1.set_title(options.title)
     ax1.set_xlabel(options.xlabel)
     ax1.set_ylabel(options.ylabel)
+    if options.xfmt == 'unix':
+        xfmt = md.DateFormatter('%Y-%m-%d\n%H:%M:%S')
+        ax1.xaxis.set_major_formatter(xfmt)
     return ax1
 
 
@@ -480,6 +502,16 @@ def get_options(argv):
                         dest='ycol2', default=default_values['ycol2'],
                         metavar='YCOL2',
                         help='use YCOL2 for refining y col',)
+    parser.add_argument('--xfmt', action='store', type=str,
+                        dest='xfmt', default=default_values['xfmt'],
+                        choices=VALID_COLUMN_FMTS,
+                        metavar='[%s]' % (' | '.join(VALID_COLUMN_FMTS,)),
+                        help='use XFMT format for x column',)
+    parser.add_argument('--yfmt', action='store', type=str,
+                        dest='yfmt', default=default_values['yfmt'],
+                        choices=VALID_COLUMN_FMTS,
+                        metavar='[%s]' % (' | '.join(VALID_COLUMN_FMTS,)),
+                        help='use YFMT format for y column',)
     parser.add_argument('--ydelta', action='store_const', const=True,
                         dest='ydelta', default=default_values['ydelta'],
                         help='use $y[k] = (y[k] - y[k-1])$',)
@@ -570,7 +602,7 @@ def get_options(argv):
     parser.add_argument('--fmt', action='append',
                         dest='fmt', default=default_values['fmt'],
                         metavar='FMT',
-                        help='use FMT format(s)',)
+                        help='use FMT format(s) for plotting',)
     parser.add_argument('--label', action='append',
                         dest='label', default=default_values['label'],
                         metavar='LABEL',
