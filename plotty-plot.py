@@ -65,6 +65,7 @@ default_values = {
     'ycol2': None,
     'xfmt': 'float',
     'yfmt': 'float',
+    'fmtdate': '%Y-%m-%d\n%H:%M:%S',
     'ydelta': False,
     'ycumulative': False,
     'filter': None,
@@ -390,7 +391,7 @@ def create_graph_begin(options):
     ax1.set_xlabel(options.xlabel)
     ax1.set_ylabel(options.ylabel)
     if options.xfmt == 'unix':
-        xfmt = md.DateFormatter('%Y-%m-%d\n%H:%M:%S')
+        xfmt = md.DateFormatter(options.fmtdate)
         ax1.xaxis.set_major_formatter(xfmt)
     return ax1
 
@@ -512,6 +513,10 @@ def get_options(argv):
                         choices=VALID_COLUMN_FMTS,
                         metavar='[%s]' % (' | '.join(VALID_COLUMN_FMTS,)),
                         help='use YFMT format for y column',)
+    parser.add_argument('--fmtdate', action='store', type=str,
+                        dest='fmtdate', default=default_values['fmtdate'],
+                        metavar='FMTDATE',
+                        help='use FMTDATE for formatting unix dates',)
     parser.add_argument('--ydelta', action='store_const', const=True,
                         dest='ydelta', default=default_values['ydelta'],
                         help='use $y[k] = (y[k] - y[k-1])$',)
