@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as md
 import numpy as np
 import os
+from scipy.optimize import curve_fit
 import sys
 
 
@@ -91,6 +92,7 @@ default_values = {
     'add_mean': False,
     'add_median': False,
     'add_stddev': False,
+    'add_regression': False,
     # per-line parameters
     'xshift': [],
     'yshift': [],
@@ -411,6 +413,11 @@ def matplotlib_fmt_to_color(fmt):
     return fmt
 
 
+# define a simple fitting function
+def fit_function(x, a, b):
+    return a * x + b
+
+
 def create_graph_draw(ax1, xlist, ylist, statistics, fmt, label, options):
     ax1.plot(xlist, ylist, fmt, label=label)
     if options.debug > 1:
@@ -442,6 +449,14 @@ def create_graph_draw(ax1, xlist, ylist, statistics, fmt, label, options):
                         color=color, linestyle='dotted', linewidth=1)
             plt.axhline(statistics['mean'] - statistics['stddev'],
                         color=color, linestyle='dotted', linewidth=1)
+        if options.add_regression:
+            # curve fit
+            (a, b), _ = curve_fit(fit_function, xlist, ylist)
+            print('fit curve: y = %.5f * x + %.5f' % (a, b))
+            # define sequence of inputs
+            x_line = np.arange(min(xlist), max(xlist), 1)
+            y_line = fit_function(x_line, a, b)
+            plt.plot(x_line, y_line, '--', color='red')
 
 
 def create_graph_end(ax1, options):
@@ -584,6 +599,10 @@ def get_options(argv):
                         dest='add_stddev', const=True,
                         default=default_values['add_stddev'],
                         help='Add 2 lines at mean +- stddev',)
+    parser.add_argument('--add-regression', action='store_const',
+                        dest='add_regression', const=True,
+                        default=default_values['add_regression'],
+                        help='Add a line at the linear regression',)
     parser.add_argument('--xlim', action='store', type=str, nargs=2,
                         dest='xlim', default=default_values['xlim'],
                         metavar=('left', 'right'),)
