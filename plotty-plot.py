@@ -350,6 +350,8 @@ def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
     # pre-filter lines
     if prefilter:
         lines = filter_lines(lines, sep, prefilter, column_names)
+        if not lines:
+            raise 'Error: no data left after filtering'
 
     xlist = []
     ylist = []
