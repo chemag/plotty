@@ -22,7 +22,7 @@ import sys
 
 __version__ = '0.1'
 
-YSCALE_VALUES = ('linear', 'log', 'symlog', 'logit')
+SCALE_VALUES = ('linear', 'log', 'symlog', 'logit')
 VALID_LEGEND_LOCS = (
     'none',
     'best',
@@ -88,6 +88,7 @@ default_values = {
     'ylabel': '--ylabel',
     'xlim': ['-', '-'],
     'ylim': ['-', '-'],
+    'xscale': 'linear',
     'yscale': 'linear',
     'add_mean': False,
     'add_median': False,
@@ -475,7 +476,8 @@ def create_graph_end(ax1, options):
     if options.ylim[1] != '-':
         plt.ylim(top=float(options.ylim[1]))
 
-    # set yscale
+    # set xscale/yscale
+    plt.xscale(options.xscale)
     plt.yscale(options.yscale)
 
     # plt.show()
@@ -611,10 +613,15 @@ def get_options(argv):
     parser.add_argument('--ylim', action='store', type=str, nargs=2,
                         dest='ylim', default=default_values['ylim'],
                         metavar=('bottom', 'top'),)
+    parser.add_argument('--xscale', action='store', type=str,
+                        dest='xscale', default=default_values['xscale'],
+                        choices=SCALE_VALUES,
+                        metavar='[%s]' % (' | '.join(SCALE_VALUES,)),
+                             help='yscale values',)
     parser.add_argument('--yscale', action='store', type=str,
                         dest='yscale', default=default_values['yscale'],
-                        choices=YSCALE_VALUES,
-                        metavar='[%s]' % (' | '.join(YSCALE_VALUES,)),
+                        choices=SCALE_VALUES,
+                        metavar='[%s]' % (' | '.join(SCALE_VALUES,)),
                              help='yscale values',)
     # per-line arguments
     parser.add_argument('--xshift', action='append',
