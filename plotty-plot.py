@@ -73,7 +73,7 @@ default_values = {
     # use '' to separate using None (any number of spaces/tabs)
     'sep': ',',
     'sep2': ',',
-    'legend_loc': 'upper right',
+    'legend_loc': 'best',
     # histogram information
     'histogram': False,
     # number of bins for the histogram
