@@ -428,6 +428,15 @@ def create_graph_draw(ax1, xlist, ylist, statistics, fmt, label, options):
             list(xlist), ylist, fmt, label))
     color = matplotlib_fmt_to_color(fmt)
 
+    if options.xfmt == 'int':
+        # make sure the ticks are all integers
+        num_values = len(ax1.get_xticks())
+        step = int(math.ceil((int(math.ceil(ax1.get_xticks()[-1])) -
+                              int(math.floor(ax1.get_xticks()[0]))) /
+                             num_values))
+        ax1.set_xticks(range(int(ax1.get_xticks()[0]),
+                             int(ax1.get_xticks()[-1]),
+                             step))
     if options.histogram:
         if options.add_median:
             plt.axvline(statistics['median'], color=color, linestyle='dotted',
