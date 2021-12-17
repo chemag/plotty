@@ -352,7 +352,7 @@ def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
     if prefilter:
         lines = filter_lines(lines, sep, prefilter, column_names)
         if not lines:
-            raise 'Error: no data left after filtering'
+            raise Exception('Error: no data left after filtering')
 
     xlist = []
     ylist = []
@@ -512,7 +512,8 @@ def get_options(argv):
     parser.add_argument('--figsize', action='store', type=str, nargs=2,
                         dest='figsize', default=default_values['figsize'],
                         metavar=('WIDTH', 'HEIGHT'),
-                        help='set figsize to WIDTH x HEIGHT',)
+                        help='set figsize to WIDTH x HEIGHT (default: %s)' % (
+                            default_values['figsize'],))
     parser.add_argument('--title', action='store',
                         dest='title', default=default_values['title'],
                         metavar='PLOTTITLE',
