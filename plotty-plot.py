@@ -394,7 +394,6 @@ def create_graph_begin(options):
     ax1 = fig.add_subplot(111)
     ax1.set_title(options.title)
     ax1.set_xlabel(options.xlabel)
-    ax1.set_ylabel(options.ylabel)
     if options.xfmt == 'unix':
         xfmt = md.DateFormatter(options.fmtdate)
         ax1.xaxis.set_major_formatter(xfmt)
@@ -820,6 +819,7 @@ def main(argv):
 
     # create the graph
     ax1 = create_graph_begin(options)
+    ax1.set_ylabel(options.ylabel)
     ax2 = None
     ax = ax1
     # add each of the entries in xy_data
