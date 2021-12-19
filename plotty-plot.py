@@ -181,7 +181,7 @@ def get_histogram(xlist, nbins, ratio, nozeroes, sigma, debug):
     return real_xlist, ylist
 
 
-def read_data(infile):
+def read_file(infile):
     # open infile
     if infile == '-':
         infile = '/dev/fd/0'
@@ -710,7 +710,7 @@ def get_options(argv):
 
 
 def batch_process_file(infile, sep, col, f):
-    flist = batch_process_data(read_data(infile), sep, col, f)
+    flist = batch_process_data(read_file(infile), sep, col, f)
     # make sure to include infile path
     dirname = os.path.dirname(infile)
     if dirname:
@@ -770,7 +770,7 @@ def main(argv):
             options.batch_infile, options.batch_sep, options.batch_col,
             options.batch_filter)
         batch_label_list = batch_process_data(
-            read_data(options.batch_infile), options.batch_sep,
+            read_file(options.batch_infile), options.batch_sep,
             options.batch_label_col, options.batch_filter)
     else:
         infile_list = [('/dev/fd/0' if name == '-' else name) for name in
@@ -802,7 +802,7 @@ def main(argv):
                   else None)
         if yshift is not None:
             print('shifting y by %f' % yshift)
-        xlist, ylist, statistics = parse_data(read_data(infile), xshift,
+        xlist, ylist, statistics = parse_data(read_file(infile), xshift,
                                               yshift, options)
         # set the label and the fmt
         if index < len(options_label_list):
@@ -822,7 +822,7 @@ def main(argv):
     ax1.set_ylabel(options.ylabel)
     ax2 = None
     ax = ax1
-    # add each of the entries in xy_data
+    # add each of the lines in xy_data
     cnt = 0
     for xlist, ylist, statistics, label, fmt in xy_data:
         create_graph_draw(ax, xlist, ylist, statistics, fmt, label, options)
