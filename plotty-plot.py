@@ -22,6 +22,7 @@ import sys
 
 __version__ = '0.1'
 
+MAX_INFILE_LIST_LEN = 20
 SCALE_VALUES = (None, 'linear', 'log', 'symlog', 'logit')
 VALID_LEGEND_LOCS = (
     'none',
@@ -759,6 +760,36 @@ def batch_process_data(raw_data, sep, col, f):
     return flist
 
 
+def get_line_info(index, infile, options, batch_label_list):
+    # get the shifts
+    xshift = None
+    if index < len(options.xshift):
+        xshift = float(options.xshift[index])
+        print('shifting x by %f' % xshift)
+    yshift = None
+    if index < len(options.yshift):
+        yshift = float(options.yshift[index])
+        print('shifting y by %f' % yshift)
+
+    # get the label
+    if index < len(options.label):
+        label = options.label[index]
+    elif index < len(batch_label_list):
+        label = batch_label_list[index]
+    else:
+        label = os.path.basename(infile) if infile != '/dev/fd/0' else 'stdin'
+
+    # get the fmt
+    default_fmt_list = ['C%i%s' % (i % 10, options.marker) for i in
+                        range(MAX_INFILE_LIST_LEN)]
+    if index < len(options.fmt):
+        fmt = options.fmt[index]
+    else:
+        fmt = default_fmt_list[index]
+
+    return xshift, yshift, label, fmt
+
+
 def main(argv):
     # parse options
     options = get_options(argv)
@@ -775,8 +806,6 @@ def main(argv):
     else:
         infile_list = [('/dev/fd/0' if name == '-' else name) for name in
                        options.infile]
-    options_label_list = options.label
-    options_fmt_list = options.fmt
     if options.outfile == '-':
         options.outfile = '/dev/fd/1'
 
@@ -786,35 +815,14 @@ def main(argv):
 
     # get all the input data into xy_data, a list of (xlist, ylist) tuples,
     # where `xlist` contains the x-axis values, `ylist` contains the y-axis
-    # values
-    default_label_list = [(
-        os.path.basename(infile) if infile != '/dev/fd/0' else 'stdin')
-        for infile in infile_list]
-    default_fmt_list = ['C%i%s' % (i % 10, options.marker) for i in
-                        range(len(infile_list))]
+    # values, and (statistics, label, fmt, ...)
     xy_data = []
     for index, infile in enumerate(infile_list):
-        xshift = (float(options.xshift[index]) if index < len(options.xshift)
-                  else None)
-        if xshift is not None:
-            print('shifting x by %f' % xshift)
-        yshift = (float(options.yshift[index]) if index < len(options.yshift)
-                  else None)
-        if yshift is not None:
-            print('shifting y by %f' % yshift)
+        # get all the info from the current line
+        xshift, yshift, label, fmt = get_line_info(index, infile, options,
+                                                   batch_label_list)
         xlist, ylist, statistics = parse_data(read_file(infile), xshift,
                                               yshift, options)
-        # set the label and the fmt
-        if index < len(options_label_list):
-            label = options_label_list[index]
-        elif index < len(batch_label_list):
-            label = batch_label_list[index]
-        else:
-            label = default_label_list[index]
-        if index < len(options_fmt_list):
-            fmt = options_fmt_list[index]
-        else:
-            fmt = default_fmt_list[index]
         xy_data.append([xlist, ylist, statistics, label, fmt])
 
     # create the graph
