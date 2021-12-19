@@ -86,7 +86,7 @@ default_values = {
     # use relative values
     'histogram_ratio': False,
     'xlabel': '--xlabel',
-    'ylabel': '--ylabel',
+    'ylabel': [],
     'xlim': ['-', '-'],
     'ylim': ['-', '-'],
     'xscale': None,
@@ -594,7 +594,7 @@ def get_options(argv):
                         dest='xlabel', default=default_values['xlabel'],
                         metavar='XLABEL',
                         help='use XLABEL x label',)
-    parser.add_argument('--ylabel', action='store',
+    parser.add_argument('--ylabel', action='append',
                         dest='ylabel', default=default_values['ylabel'],
                         metavar='YLABEL',
                         help='use YLABEL x label',)
@@ -840,7 +840,8 @@ def main(argv):
 
     # create the graph
     ax1 = create_graph_begin(options)
-    ax1.set_ylabel(options.ylabel)
+    if len(options.ylabel) > 0:
+        ax1.set_ylabel(options.ylabel[0])
     ax2 = None
     ax = ax1
     # add each of the lines in xy_data
@@ -849,6 +850,8 @@ def main(argv):
         if options.twinx > 0 and cnt >= options.twinx:
             ax2 = ax1.twinx()
             ax = ax2
+            if len(options.ylabel) > 1:
+                ax2.set_ylabel(options.ylabel[1])
         create_graph_draw(ax, xlist, ylist, statistics, fmt, label, options)
         cnt += 1
 
