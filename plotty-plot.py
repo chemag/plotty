@@ -339,7 +339,7 @@ def fmt_convert(item, fmt):
     elif fmt == 'unix':
         # convert unix timestamp to matplotlib datenum
         return md.date2num(datetime.datetime.fromtimestamp(float(item)))
-    raise 'Error: invalid fmt (%s)' % fmt
+    raise Exception('Error: invalid fmt (%s)' % fmt)
 
 
 def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
