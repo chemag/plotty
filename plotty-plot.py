@@ -421,22 +421,22 @@ def fit_function(x, a, b):
     return a * x + b
 
 
-def create_graph_draw(ax1, xlist, ylist, statistics, fmt, label, options):
-    ax1.plot(xlist, ylist, fmt, label=label)
+def create_graph_draw(ax, xlist, ylist, statistics, fmt, label, options):
+    ax.plot(xlist, ylist, fmt, label=label)
     if options.debug > 1:
-        print('ax1.plot(%r, %r, \'%s\', label=%r)' % (
+        print('ax.plot(%r, %r, \'%s\', label=%r)' % (
             list(xlist), ylist, fmt, label))
     color = matplotlib_fmt_to_color(fmt)
 
     if options.xfmt == 'int':
         # make sure the ticks are all integers
-        num_values = len(ax1.get_xticks())
-        step = int(math.ceil((int(math.ceil(ax1.get_xticks()[-1])) -
-                              int(math.floor(ax1.get_xticks()[0]))) /
+        num_values = len(ax.get_xticks())
+        step = int(math.ceil((int(math.ceil(ax.get_xticks()[-1])) -
+                              int(math.floor(ax.get_xticks()[0]))) /
                              num_values))
-        ax1.set_xticks(range(int(ax1.get_xticks()[0]),
-                             int(ax1.get_xticks()[-1]),
-                             step))
+        ax.set_xticks(range(int(ax.get_xticks()[0]),
+                            int(ax.get_xticks()[-1]),
+                            step))
     if options.histogram:
         if options.add_median:
             plt.axvline(statistics['median'], color=color, linestyle='dotted',
@@ -471,30 +471,26 @@ def create_graph_draw(ax1, xlist, ylist, statistics, fmt, label, options):
             plt.plot(x_line, y_line, '--', color='red')
 
 
-def create_graph_end(ax1, options):
-    if options.legend_loc != 'none':
-        _ = ax1.legend(loc=options.legend_loc)
+def create_graph_end(ax, legend_loc, xlim, ylim, xscale, yscale):
+    if legend_loc != 'none':
+        _ = ax.legend(loc=legend_loc)
 
     # set xlim/ylim
-    if options.xlim[0] != '-':
-        ax1.set_xlim(left=float(options.xlim[0]))
-    if options.xlim[1] != '-':
-        ax1.set_xlim(right=float(options.xlim[1]))
+    if xlim[0] != '-':
+        ax.set_xlim(left=float(xlim[0]))
+    if xlim[1] != '-':
+        ax.set_xlim(right=float(xlim[1]))
 
-    if options.ylim[0] != '-':
-        ax1.set_ylim(bottom=float(options.ylim[0]))
-    if options.ylim[1] != '-':
-        ax1.set_ylim(top=float(options.ylim[1]))
+    if ylim[0] != '-':
+        ax.set_ylim(bottom=float(ylim[0]))
+    if ylim[1] != '-':
+        ax.set_ylim(top=float(ylim[1]))
 
     # set xscale/yscale
-    if options.xscale is not None:
-        ax1.set_xscale(options.xscale)
-    if options.yscale is not None:
-        ax1.set_yscale(options.yscale)
-
-    # plt.show()
-    print('output is %s' % options.outfile)
-    plt.savefig('%s' % options.outfile)
+    if xscale is not None:
+        ax.set_xscale(xscale)
+    if yscale is not None:
+        ax.set_yscale(yscale)
 
 
 def get_options(argv):
@@ -810,12 +806,18 @@ def main(argv):
             fmt = default_fmt_list[index]
         xy_data.append([xlist, ylist, statistics, label, fmt])
 
-    # create the graph, adding each of the entries in xy_data
+    # create the graph
     ax1 = create_graph_begin(options)
-
+    # add each of the entries in xy_data
     for xlist, ylist, statistics, label, fmt in xy_data:
         create_graph_draw(ax1, xlist, ylist, statistics, fmt, label, options)
-    create_graph_end(ax1, options)
+    # set final graph details
+    create_graph_end(ax1, options.legend_loc, options.xlim, options.ylim,
+                     options.xscale, options.yscale)
+    # save graph
+    if options.debug > 0:
+        print('output is %s' % options.outfile)
+    plt.savefig('%s' % options.outfile)
 
 
 if __name__ == '__main__':
