@@ -63,7 +63,7 @@ default_values = {
     'title': '--title',
     'xcol': 0,
     'xcol2': None,
-    'ycol': 1,
+    'ycol': [],
     'ycol2': None,
     'xfmt': 'float',
     'yfmt': 'float',
@@ -269,14 +269,12 @@ def parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2):
     return x, y
 
 
-def parse_data(raw_data, xshift_local, yshift_local, options):
+def parse_data(raw_data, ycol, xshift_local, yshift_local, options):
     prefilter = options.filter
     sep = options.sep if options.sep != '' else None
     xcol = options.xcol
     xcol2 = options.xcol2
     sep2 = options.sep2 if options.sep2 != '' else None
-    # histograms do not need a ycol
-    ycol = options.ycol if not options.histogram else xcol
     ycol2 = options.ycol2
     xfmt = options.xfmt
     yfmt = options.yfmt
@@ -523,7 +521,7 @@ def get_options(argv):
                         dest='xcol2', default=default_values['xcol2'],
                         metavar='XCOL2',
                         help='use XCOL2 for refining x col',)
-    parser.add_argument('--ycol', action='store',
+    parser.add_argument('--ycol', action='append',
                         dest='ycol', default=default_values['ycol'],
                         metavar='YCOL',
                         help='use YCOL y col',)
@@ -761,7 +759,21 @@ def batch_process_data(raw_data, sep, col, f):
 
 
 def get_line_info(index, infile, options, batch_label_list):
-    # get the shifts
+    # 1. parameters that keep the last one if not enough
+    # ycol
+    if len(options.ycol) == 0:
+        # no ycol
+        if options.histogram:
+            ycol = options.xcol
+        else:
+            raise Exception('Error: need a ycol value')
+    elif index < len(options.ycol):
+        ycol = int(options.ycol[index])
+    else:
+        ycol = int(options.ycol[-1])
+
+    # 2. parameters that use a default if not enough
+    # shifts
     xshift = None
     if index < len(options.xshift):
         xshift = float(options.xshift[index])
@@ -771,7 +783,8 @@ def get_line_info(index, infile, options, batch_label_list):
         yshift = float(options.yshift[index])
         print('shifting y by %f' % yshift)
 
-    # get the label
+    # 3. parameters that are derive automaticall if not enough
+    # label
     if index < len(options.label):
         label = options.label[index]
     elif index < len(batch_label_list):
@@ -779,7 +792,7 @@ def get_line_info(index, infile, options, batch_label_list):
     else:
         label = os.path.basename(infile) if infile != '/dev/fd/0' else 'stdin'
 
-    # get the fmt
+    # fmt
     default_fmt_list = ['C%i%s' % (i % 10, options.marker) for i in
                         range(MAX_INFILE_LIST_LEN)]
     if index < len(options.fmt):
@@ -787,7 +800,7 @@ def get_line_info(index, infile, options, batch_label_list):
     else:
         fmt = default_fmt_list[index]
 
-    return xshift, yshift, label, fmt
+    return ycol, xshift, yshift, label, fmt
 
 
 def main(argv):
@@ -819,10 +832,10 @@ def main(argv):
     xy_data = []
     for index, infile in enumerate(infile_list):
         # get all the info from the current line
-        xshift, yshift, label, fmt = get_line_info(index, infile, options,
-                                                   batch_label_list)
-        xlist, ylist, statistics = parse_data(read_file(infile), xshift,
-                                              yshift, options)
+        ycol, xshift, yshift, label, fmt = (
+                get_line_info(index, infile, options, batch_label_list))
+        xlist, ylist, statistics = parse_data(
+                read_file(infile), ycol, xshift, yshift, options)
         xy_data.append([xlist, ylist, statistics, label, fmt])
 
     # create the graph
