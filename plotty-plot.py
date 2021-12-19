@@ -633,6 +633,10 @@ def get_options(argv):
                         choices=SCALE_VALUES,
                         metavar='[%s]' % (' | '.join(scale_values_str,)),
                              help='yscale values',)
+    parser.add_argument('--twinx', action='store_const',
+                        dest='twinx', const=0, default=-1,
+                        metavar='TWINX',
+                        help='use twin y axes',)
     # per-line arguments
     parser.add_argument('--xshift', action='append',
                         dest='xshift', default=default_values['xshift'],
@@ -695,6 +699,14 @@ def get_options(argv):
     # check there is an input file
     assert options.infile or options.batch_infile, (
        'error: must provide valid input file')
+    # check twinx
+    if options.twinx == 0:
+        # count the number of lines before and after the twinx
+        lines_before_twinx = argv[:argv.index('--twinx')].count('-i')
+        lines_after_twinx = argv[argv.index('--twinx'):].count('-i')
+        assert lines_before_twinx > 0, 'need at least 1 line before twinx'
+        assert lines_after_twinx > 0, 'need at least 1 line after twinx'
+        options.twinx = lines_before_twinx
     return options
 
 
@@ -808,12 +820,23 @@ def main(argv):
 
     # create the graph
     ax1 = create_graph_begin(options)
+    ax2 = None
+    ax = ax1
     # add each of the entries in xy_data
+    cnt = 0
     for xlist, ylist, statistics, label, fmt in xy_data:
-        create_graph_draw(ax1, xlist, ylist, statistics, fmt, label, options)
+        create_graph_draw(ax, xlist, ylist, statistics, fmt, label, options)
+        if options.twinx > 0 and cnt >= options.twinx:
+            ax2 = ax1.twinx()
+            ax = ax2
+        cnt += 1
+
     # set final graph details
     create_graph_end(ax1, options.legend_loc, options.xlim, options.ylim,
                      options.xscale, options.yscale)
+    if ax2 is not None:
+        create_graph_end(ax2, options.legend_loc, options.xlim, options.ylim,
+                         options.xscale, options.yscale)
     # save graph
     if options.debug > 0:
         print('output is %s' % options.outfile)
