@@ -846,10 +846,10 @@ def main(argv):
     # add each of the lines in xy_data
     cnt = 0
     for xlist, ylist, statistics, label, fmt in xy_data:
-        create_graph_draw(ax, xlist, ylist, statistics, fmt, label, options)
         if options.twinx > 0 and cnt >= options.twinx:
             ax2 = ax1.twinx()
             ax = ax2
+        create_graph_draw(ax, xlist, ylist, statistics, fmt, label, options)
         cnt += 1
 
     # set final graph details
