@@ -477,19 +477,20 @@ def create_graph_end(ax1, options):
 
     # set xlim/ylim
     if options.xlim[0] != '-':
-        plt.xlim(left=float(options.xlim[0]))
+        ax1.set_xlim(left=float(options.xlim[0]))
     if options.xlim[1] != '-':
-        plt.xlim(right=float(options.xlim[1]))
+        ax1.set_xlim(right=float(options.xlim[1]))
+
     if options.ylim[0] != '-':
-        plt.ylim(bottom=float(options.ylim[0]))
+        ax1.set_ylim(bottom=float(options.ylim[0]))
     if options.ylim[1] != '-':
-        plt.ylim(top=float(options.ylim[1]))
+        ax1.set_ylim(top=float(options.ylim[1]))
 
     # set xscale/yscale
     if options.xscale is not None:
-        plt.xscale(options.xscale)
+        ax1.set_xscale(options.xscale)
     if options.yscale is not None:
-        plt.yscale(options.yscale)
+        ax1.set_yscale(options.yscale)
 
     # plt.show()
     print('output is %s' % options.outfile)
