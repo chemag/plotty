@@ -787,6 +787,8 @@ def get_line_info(index, infile, options, batch_label_list):
     # label
     if index < len(options.label):
         label = options.label[index]
+        if label.lower() == 'none':
+            label = None
     elif index < len(batch_label_list):
         label = batch_label_list[index]
     else:
