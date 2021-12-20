@@ -93,7 +93,7 @@ VALID_COLUMN_FMTS = ('float', 'int', 'unix')
 # * used in create_graph_end()
 #   * legend_loc [ ]
 #   * xlim [ ]
-#   * ylim [ ]
+#   * ylim [v]
 #   * xscale [ ]
 #   * yscale [ ]
 
@@ -131,7 +131,7 @@ default_values = {
     'xlabel': '--xlabel',
     'ylabel': [],
     'xlim': ['-', '-'],
-    'ylim': ['-', '-'],
+    'ylim': [],
     'xscale': None,
     'yscale': None,
     'add_mean': False,
@@ -512,7 +512,9 @@ def create_graph_draw(ax, xlist, ylist, statistics, fmt, label, options):
             plt.plot(x_line, y_line, '--', color='red')
 
 
-def create_graph_end(ax, legend_loc, xlim, ylim, xscale, yscale):
+def create_graph_end(ax, ylabel, legend_loc, xlim, ylim, xscale, yscale):
+    ax.set_ylabel(ylabel)
+
     if legend_loc != 'none':
         # TODO(chema): use common legend
         # https://stackoverflow.com/a/14344146
@@ -524,10 +526,11 @@ def create_graph_end(ax, legend_loc, xlim, ylim, xscale, yscale):
     if xlim[1] != '-':
         ax.set_xlim(right=float(xlim[1]))
 
-    if ylim[0] != '-':
-        ax.set_ylim(bottom=float(ylim[0]))
-    if ylim[1] != '-':
-        ax.set_ylim(top=float(ylim[1]))
+    if ylim is not None:
+        if ylim[0] != '-':
+            ax.set_ylim(bottom=float(ylim[0]))
+        if ylim[1] != '-':
+            ax.set_ylim(top=float(ylim[1]))
 
     # set xscale/yscale
     if xscale is not None:
@@ -662,7 +665,7 @@ def get_options(argv):
     parser.add_argument('--xlim', action='store', type=str, nargs=2,
                         dest='xlim', default=default_values['xlim'],
                         metavar=('left', 'right'),)
-    parser.add_argument('--ylim', action='store', type=str, nargs=2,
+    parser.add_argument('--ylim', action='append', type=str, nargs=2,
                         dest='ylim', default=default_values['ylim'],
                         metavar=('bottom', 'top'),)
     scale_values_str = [str(item) for item in SCALE_VALUES]
@@ -890,10 +893,12 @@ def main(argv):
     ax.append(create_graph_begin(options))
     if options.twinx > 0:
         ax.append(ax[0].twinx())
+
+    axinfo = []
     for axid in range(len(ax)):
-        # set the values
-        if axid < len(options.ylabel):
-            ax[axid].set_ylabel(options.ylabel[index])
+        ylabel = options.ylabel[axid] if axid < len(options.ylabel) else None
+        ylim = options.ylim[axid] if axid < len(options.ylim) else None
+        axinfo.append([ylabel, ylim])
 
     # 3. create the graph
     # add each of the lines in xy_data
@@ -905,10 +910,10 @@ def main(argv):
                           options)
 
     # set final graph details
-    for axid in range(len(ax)):
+    for axid, (ylabel, ylim) in enumerate(axinfo):
         # set the values
-        create_graph_end(ax[axid], options.legend_loc, options.xlim,
-                         options.ylim, options.xscale, options.yscale)
+        create_graph_end(ax[axid], ylabel, options.legend_loc, options.xlim,
+                         ylim, options.xscale, options.yscale)
     # save graph
     if options.debug > 0:
         print('output is %s' % options.outfile)
