@@ -841,29 +841,31 @@ def main(argv):
                 read_file(infile), ycol, xshift, yshift, options)
         xy_data.append([xlist, ylist, statistics, label, fmt])
 
-    # create the graph
-    ax1 = create_graph_begin(options)
-    if len(options.ylabel) > 0:
-        ax1.set_ylabel(options.ylabel[0])
-    ax2 = None
-    ax = ax1
+    # 2. get all the per-axes info
+    # create the axes
+    ax = []
+    ax.append(create_graph_begin(options))
+    if options.twinx > 0:
+        ax.append(ax[0].twinx())
+    for axid in range(len(ax)):
+        # set the values
+        if axid < len(options.ylabel):
+            ax[axid].set_ylabel(options.ylabel[index])
+
+    # 3. create the graph
     # add each of the lines in xy_data
-    cnt = 0
-    for xlist, ylist, statistics, label, fmt in xy_data:
-        if options.twinx > 0 and cnt >= options.twinx:
-            ax2 = ax1.twinx()
-            ax = ax2
-            if len(options.ylabel) > 1:
-                ax2.set_ylabel(options.ylabel[1])
-        create_graph_draw(ax, xlist, ylist, statistics, fmt, label, options)
-        cnt += 1
+    axid = 0
+    for index, (xlist, ylist, statistics, label, fmt) in enumerate(xy_data):
+        if options.twinx > 0 and index == options.twinx:
+            axid += 1
+        create_graph_draw(ax[axid], xlist, ylist, statistics, fmt, label,
+                          options)
 
     # set final graph details
-    create_graph_end(ax1, options.legend_loc, options.xlim, options.ylim,
-                     options.xscale, options.yscale)
-    if ax2 is not None:
-        create_graph_end(ax2, options.legend_loc, options.xlim, options.ylim,
-                         options.xscale, options.yscale)
+    for axid in range(len(ax)):
+        # set the values
+        create_graph_end(ax[axid], options.legend_loc, options.xlim,
+                         options.ylim, options.xscale, options.yscale)
     # save graph
     if options.debug > 0:
         print('output is %s' % options.outfile)
