@@ -471,6 +471,8 @@ def create_graph_draw(ax, xlist, ylist, statistics, fmt, label, options):
 
 def create_graph_end(ax, legend_loc, xlim, ylim, xscale, yscale):
     if legend_loc != 'none':
+        # TODO(chema): use common legend
+        # https://stackoverflow.com/a/14344146
         _ = ax.legend(loc=legend_loc)
 
     # set xlim/ylim
