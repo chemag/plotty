@@ -810,7 +810,8 @@ def main(argv):
     # parse options
     options = get_options(argv)
 
-    # get infile(s)/outfile
+    # 1. get all the per-line info into xy_data
+    # 1.1. get infile(s)/outfile
     batch_label_list = []
     if options.batch_infile is not None:
         infile_list = batch_process_file(
@@ -825,13 +826,12 @@ def main(argv):
     if options.outfile == '-':
         options.outfile = '/dev/fd/1'
 
-    # print results
     if options.debug > 0:
         print(options)
 
-    # get all the input data into xy_data, a list of (xlist, ylist) tuples,
-    # where `xlist` contains the x-axis values, `ylist` contains the y-axis
-    # values, and (statistics, label, fmt, ...)
+    # 1.2. get all the per-line info into xy_data
+    # Includes `ycol`, `xlist` (x-axis values), `ylist` (y-axis values),
+    # `statistics`, `label`, `fmt`.
     xy_data = []
     for index, infile in enumerate(infile_list):
         # get all the info from the current line
