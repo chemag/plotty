@@ -56,6 +56,49 @@ VALID_MATPLOTLIB_COLORS = {
 VALID_COLUMN_FMTS = ('float', 'int', 'unix')
 
 
+# parameter notes
+# There are 3 type of parameters
+# * 1. single: same value for every line (e.g. --xfmt)
+# * 2. per-axis: need a different value per axis (e.g. --ylim)
+#   We use --twinx to create multiple axis
+# * 3. per-line: need a different value per line (e.g. --ycol)
+#   We attach lines to axis based on the exact parameter location.
+#   * subtypes depending on what to do if there are not as many occurrences
+#     as '-i' elements.
+#     * 3.1. keep the last one if not enough
+#     * 3.2. use default value if not enough
+# * 4. multiple applications:
+#   * e.g. filter (prefilter): allows multiple filtering
+#
+# List of per-axis and per-line parameters:
+# * used in parse_data()
+#   * ycol [v]
+#   * yfmt [ ]
+#   * ydelta [ ]
+#   * ycumulative [ ]
+#   * xshift [v]
+#   * yshift [v]
+#   * label [v]
+#   * fmt [v]
+#   * infile [v]
+# * used in create_graph_begin()
+#   * ylabel [v]
+# * used in create_graph_draw()
+#   * xfmt [ ]
+#   * histogram [ ]
+#   * add_median [ ]
+#   * add_mean [ ]
+#   * add_stddev [ ]
+#   * add_regression [ ]
+# * used in create_graph_end()
+#   * legend_loc [ ]
+#   * xlim [ ]
+#   * ylim [ ]
+#   * xscale [ ]
+#   * yscale [ ]
+
+
+#
 default_values = {
     'debug': 0,
     'marker': '.',
