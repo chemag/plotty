@@ -91,7 +91,7 @@ VALID_COLUMN_FMTS = ('float', 'int', 'unix')
 #   * add_stddev [ ]
 #   * add_regression [ ]
 # * used in create_graph_end()
-#   * legend_loc [ ]
+#   * legend_loc [v]
 #   * xlim [ ]
 #   * ylim [v]
 #   * xscale [ ]
@@ -512,13 +512,8 @@ def create_graph_draw(ax, xlist, ylist, statistics, fmt, label, options):
             plt.plot(x_line, y_line, '--', color='red')
 
 
-def create_graph_end(ax, ylabel, legend_loc, xlim, ylim, xscale, yscale):
+def create_graph_end(ax, ylabel, xlim, ylim, xscale, yscale):
     ax.set_ylabel(ylabel)
-
-    if legend_loc != 'none':
-        # TODO(chema): use common legend
-        # https://stackoverflow.com/a/14344146
-        _ = ax.legend(loc=legend_loc)
 
     # set xlim/ylim
     if xlim[0] != '-':
@@ -912,8 +907,20 @@ def main(argv):
     # set final graph details
     for axid, (ylabel, ylim) in enumerate(axinfo):
         # set the values
-        create_graph_end(ax[axid], ylabel, options.legend_loc, options.xlim,
+        create_graph_end(ax[axid], ylabel, options.xlim,
                          ylim, options.xscale, options.yscale)
+
+    # set common legend
+    if options.legend_loc != 'none':
+        # https://stackoverflow.com/a/14344146
+        lin_list = []
+        leg_list = []
+        for axid in range(len(ax)):
+            lin, leg = ax[axid].get_legend_handles_labels()
+            lin_list += lin
+            leg_list += leg
+        _ = ax[0].legend(lin_list, leg_list, loc=options.legend_loc)
+
     # save graph
     if options.debug > 0:
         print('output is %s' % options.outfile)
