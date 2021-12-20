@@ -633,9 +633,8 @@ def get_options(argv):
                         choices=SCALE_VALUES,
                         metavar='[%s]' % (' | '.join(scale_values_str,)),
                              help='yscale values',)
-    parser.add_argument('--twinx', action='store_const',
-                        dest='twinx', const=0, default=-1,
-                        metavar='TWINX',
+    parser.add_argument('--twinx', action='count',
+                        dest='twinx', default=0,
                         help='use twin y axes',)
     # per-line arguments
     parser.add_argument('--xshift', action='append',
@@ -700,7 +699,7 @@ def get_options(argv):
     assert options.infile or options.batch_infile, (
        'error: must provide valid input file')
     # check twinx
-    if options.twinx == 0:
+    if options.twinx > 0:
         # count the number of lines before and after the twinx
         lines_before_twinx = argv[:argv.index('--twinx')].count('-i')
         lines_after_twinx = argv[argv.index('--twinx'):].count('-i')
