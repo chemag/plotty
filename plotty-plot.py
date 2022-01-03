@@ -61,12 +61,13 @@ VALID_COLUMN_FMTS = ('float', 'int', 'unix')
 # * 1. single: same value for every line (e.g. --xfmt)
 # * 2. per-axis: need a different value per axis (e.g. --ylim)
 #   We use --twinx to create multiple axis
-# * 3. per-line: need a different value per line (e.g. --ycol)
+# * 3. per-line: need a different value per line (e.g. --ycol, --fmt)
 #   We attach lines to axis based on the exact parameter location.
 #   * subtypes depending on what to do if there are not as many occurrences
 #     as '-i' elements.
 #     * 3.1. keep the last one if not enough
 #     * 3.2. use default value if not enough
+#     * 3.3. positional parameters: attach to the previous '-i'
 # * 4. multiple applications:
 #   * e.g. filter (prefilter): allows multiple filtering
 #
@@ -80,6 +81,7 @@ VALID_COLUMN_FMTS = ('float', 'int', 'unix')
 #   * yshift [v]
 #   * label [v]
 #   * fmt [v]
+#   * color [v]
 #   * infile [v]
 # * used in create_graph_begin()
 #   * ylabel [v]
@@ -143,6 +145,7 @@ default_values = {
     'yshift': [],
     'label': [],
     'fmt': [],
+    'color': [],
     'infile': [],
     # batch conf parameters
     'batch_infile': None,
@@ -374,6 +377,7 @@ def is_int(s):
     return (s[1:].isdigit() if s[0] in ('-', '+') else s.isdigit())
 
 
+# convert axis format
 def fmt_convert(item, fmt):
     if fmt == 'int':
         return int(float(item))
@@ -442,7 +446,9 @@ def create_graph_begin(options):
     return ax1
 
 
-def matplotlib_fmt_to_color(fmt):
+def matplotlib_fmt_to_color(fmt, color):
+    if color is not None:
+        return color
     # valid colors:
     # (1) single letter (e.g. 'b'),
     if len(fmt) >= 1 and fmt[0] in VALID_MATPLOTLIB_COLORS.keys():
@@ -462,12 +468,14 @@ def fit_function(x, a, b):
     return a * x + b
 
 
-def create_graph_draw(ax, xlist, ylist, statistics, fmt, label, options):
-    ax.plot(xlist, ylist, fmt, label=label)
+def create_graph_draw(ax, xlist, ylist, statistics, fmt, color, label,
+                      options):
+    color = matplotlib_fmt_to_color(fmt, color)
+    ax.plot(xlist, ylist, fmt, color=color, label=label)
+
     if options.debug > 1:
-        print('ax.plot(%r, %r, \'%s\', label=%r)' % (
-            list(xlist), ylist, fmt, label))
-    color = matplotlib_fmt_to_color(fmt)
+        print('ax.plot(%r, %r, \'%s\', color=%s, label=%r)' % (
+            list(xlist), ylist, fmt, color, label))
 
     if options.xfmt == 'int':
         # make sure the ticks are all integers
@@ -690,6 +698,10 @@ def get_options(argv):
                         dest='fmt', default=default_values['fmt'],
                         metavar='FMT',
                         help='use FMT format(s) for plotting',)
+    parser.add_argument('--color', action='append',
+                        dest='color', default=default_values['color'],
+                        metavar='COLOR',
+                        help='use COLOR color(s) for plotting',)
     parser.add_argument('--label', action='append',
                         dest='label', default=default_values['label'],
                         metavar='LABEL',
@@ -747,7 +759,36 @@ def get_options(argv):
         assert lines_before_twinx > 0, 'need at least 1 line before twinx'
         assert lines_after_twinx > 0, 'need at least 1 line after twinx'
         options.twinx = lines_before_twinx
+    # check positional parameters
+    options.color = build_positional_parameter(argv, '--color')
+
     return options
+
+
+def build_positional_parameter(argv, parid):
+    parameter = []
+    # note that every parameter must follow a '-i' (or '--infile')
+    init = True
+    prev_i = False
+    for i, par in enumerate(argv):
+        if par not in (parid, '-i', '--infile'):
+            # ignore other parameters
+            continue
+        assert not ((par == parid) and init), 'cannot have %s before "-i"'
+        init = False
+        if par in ('-i', '--infile'):
+            if prev_i:
+                # hanging '-i'
+                parameter.append(None)
+            else:
+                prev_i = True
+        else:  # par == parid
+            parameter.append(argv[i+1])
+            prev_i = False
+    if prev_i:
+        # hanging '-i'
+        parameter.append(None)
+    return parameter
 
 
 def batch_process_file(infile, sep, col, f):
@@ -825,7 +866,7 @@ def get_line_info(index, infile, options, batch_label_list):
         yshift = float(options.yshift[index])
         print('shifting y by %f' % yshift)
 
-    # 3. parameters that are derive automaticall if not enough
+    # 3. parameters that are derived automatically if not enough
     # label
     if index < len(options.label):
         label = options.label[index]
@@ -844,7 +885,10 @@ def get_line_info(index, infile, options, batch_label_list):
     else:
         fmt = default_fmt_list[index]
 
-    return ycol, xshift, yshift, label, fmt
+    # color
+    color = options.color[index]
+
+    return ycol, xshift, yshift, label, fmt, color
 
 
 def main(argv):
@@ -872,15 +916,15 @@ def main(argv):
 
     # 1.2. get all the per-line info into xy_data
     # Includes `ycol`, `xlist` (x-axis values), `ylist` (y-axis values),
-    # `statistics`, `label`, `fmt`.
+    # `statistics`, `label`, `fmt`, `color`.
     xy_data = []
     for index, infile in enumerate(infile_list):
         # get all the info from the current line
-        ycol, xshift, yshift, label, fmt = (
+        ycol, xshift, yshift, label, fmt, color = (
                 get_line_info(index, infile, options, batch_label_list))
         xlist, ylist, statistics = parse_data(
                 read_file(infile), ycol, xshift, yshift, options)
-        xy_data.append([xlist, ylist, statistics, label, fmt])
+        xy_data.append([xlist, ylist, statistics, label, fmt, color])
 
     # 2. get all the per-axes info
     # create the axes
@@ -898,11 +942,12 @@ def main(argv):
     # 3. create the graph
     # add each of the lines in xy_data
     axid = 0
-    for index, (xlist, ylist, statistics, label, fmt) in enumerate(xy_data):
+    for index, (xlist, ylist, statistics, label, fmt, color
+                ) in enumerate(xy_data):
         if options.twinx > 0 and index == options.twinx:
             axid += 1
-        create_graph_draw(ax[axid], xlist, ylist, statistics, fmt, label,
-                          options)
+        create_graph_draw(ax[axid], xlist, ylist, statistics, fmt, color,
+                          label, options)
 
     # set final graph details
     for axid, (ylabel, ylim) in enumerate(axinfo):
