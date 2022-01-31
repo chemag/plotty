@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
-"""histogram.py: simple histogram plotter.
-
-# http://matplotlib.org/examples/statistics/histogram_demo_cumulative.html
+"""plotty-plot_unittest.py: plotty unittest.
 
 # runme
-# $ echo -e "1\n2\n1\n2\n3\n1\n4\n" | ./plotty-histogram.py -i - /tmp/bar.png
+# $ ./plotty-plot_unittest.py
 """
 
 import importlib
