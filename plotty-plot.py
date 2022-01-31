@@ -565,7 +565,6 @@ def get_options(argv):
     parser.add_argument('-v', '--version', action='store_true',
                         dest='version', default=False,
                         help='Print version',)
-
     parser.add_argument('-d', '--debug', action='count',
                         dest='debug', default=default_values['debug'],
                         help='Increase verbosity (multiple times for more)',)
