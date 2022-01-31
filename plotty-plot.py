@@ -562,6 +562,10 @@ def create_graph_end(ax, ylabel, xlim, ylim, xscale, yscale):
 def get_options(argv):
     # parse opts
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('-v', '--version', action='store_true',
+                        dest='version', default=False,
+                        help='Print version',)
+
     parser.add_argument('-d', '--debug', action='count',
                         dest='debug', default=default_values['debug'],
                         help='Increase verbosity (multiple times for more)',)
@@ -754,12 +758,15 @@ def get_options(argv):
                         help='select only batch rows where COL OP VAL '
                         'is true',)
     # output
-    parser.add_argument('outfile', type=str,
+    parser.add_argument('outfile', type=str, nargs='?',
                         default=default_values['outfile'],
                         metavar='output-file',
                         help='output file',)
     # do the parsing
     options = parser.parse_args(argv[1:])
+    if options.version:
+        return options
+
     # check the filters
     for f in (options.filter, options.batch_filter):
         if f is None:
@@ -913,6 +920,9 @@ def get_line_info(index, infile, options, batch_label_list):
 def main(argv):
     # parse options
     options = get_options(argv)
+    if options.version:
+        print('version: %s' % __version__)
+        sys.exit(0)
 
     # 1. get all the per-line info into xy_data
     # 1.1. get infile(s)/outfile
