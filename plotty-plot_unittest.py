@@ -179,29 +179,55 @@ parseDataTestCases = [
         'statistics': {'median': 4.5, 'mean': 4.4, 'stddev': 2.72764}
     },
     {
-        'name': 'histogram ratio 1',
+        'name': 'histogram pdf 1',
         'parameters': {
             'sep': ',',
             'xcol': 8,
             'histogram': True,
             'histogram-bins': 2,
-            'histogram-ratio': True,
+            'histogram-type': 'pdf',
         },
         'xlist': [2.0, 6.0],
         'ylist': [0.4, 0.6],
         'statistics': {'median': 4.5, 'mean': 4.4, 'stddev': 2.72764}
     },
     {
-        'name': 'histogram ratio 2',
+        'name': 'histogram pdf 2',
         'parameters': {
             'sep': ',',
             'xcol': 8,
             'histogram': True,
             'histogram-bins': 4,
-            'histogram-ratio': True,
+            'histogram-type': 'pdf',
         },
         'xlist': [1.0, 3.0, 5.0, 7.0],
         'ylist': [0.2, 0.2, 0.2, 0.4],
+        'statistics': {'median': 4.5, 'mean': 4.4, 'stddev': 2.72764}
+    },
+    {
+        'name': 'histogram cdf 1',
+        'parameters': {
+            'sep': ',',
+            'xcol': 8,
+            'histogram': True,
+            'histogram-bins': 2,
+            'histogram-type': 'cdf',
+        },
+        'xlist': [2.0, 6.0],
+        'ylist': [0.4, 1.0],
+        'statistics': {'median': 4.5, 'mean': 4.4, 'stddev': 2.72764}
+    },
+    {
+        'name': 'histogram cdf 2',
+        'parameters': {
+            'sep': ',',
+            'xcol': 8,
+            'histogram': True,
+            'histogram-bins': 4,
+            'histogram-type': 'cdf',
+        },
+        'xlist': [1.0, 3.0, 5.0, 7.0],
+        'ylist': [0.2, 0.4, 0.6, 1.0],
         'statistics': {'median': 4.5, 'mean': 4.4, 'stddev': 2.72764}
     },
     {
@@ -277,10 +303,19 @@ def statisticsIsClose(d1, d2):
         return False
     # make sure elements are close enough same
     rel_tol = 1e-3
-    for k in d1.keys():
-        if not math.isclose(d1[k], d2[k], rel_tol=rel_tol):
-            return False
-    return True
+    key_list = d1.keys()
+    l1 = [d1[k] for k in key_list]
+    l2 = [d2[k] for k in key_list]
+    return compareFloatList(l1, l2, rel_tol)
+
+
+# compares float lists, returning True if they are the same, and False if
+# they are not
+def compareFloatList(l1, l2, rel_tol=1e-09):
+    same_list = [math.isclose(f1, f2, rel_tol=rel_tol) for f1, f2 in
+                 zip(l1, l2)]
+    # reduce the list
+    return all(same_list)
 
 
 class MyTest(unittest.TestCase):
@@ -316,11 +351,14 @@ class MyTest(unittest.TestCase):
             # add progname and required args
             argv = ['progname', ] + argv + ['-i', '/dev/null', 'outfile', ]
             options = plotty_plot.get_options(argv)
+            ycol = options.ycol[0] if options.ycol else None
             xlist, ylist, statistics = plotty_plot.parse_data(
-                data, xshift, yshift, options)
+                data, ycol, xshift, yshift, options)
             msg = 'unittest failed: %s' % test_case['name']
-            self.assertEqual(test_case['xlist'], xlist, msg=msg)
-            self.assertEqual(test_case['ylist'], ylist, msg=msg)
+            self.assertTrue(compareFloatList(test_case['xlist'], xlist),
+                            msg=msg)
+            self.assertTrue(compareFloatList(test_case['ylist'], ylist),
+                            msg=msg)
             self.assertTrue(statisticsIsClose(test_case['statistics'],
                                               statistics), msg=msg)
 

@@ -56,6 +56,9 @@ VALID_MATPLOTLIB_COLORS = {
 VALID_COLUMN_FMTS = ('float', 'int', 'unix')
 
 
+VALID_HISTOGRAM_TYPES = ('raw', 'pdf', 'cdf')
+
+
 # parameter notes
 # There are 3 type of parameters
 # * 1. single: same value for every line (e.g. --xfmt)
@@ -99,7 +102,6 @@ VALID_COLUMN_FMTS = ('float', 'int', 'unix')
 #   * xscale [ ]
 #   * yscale [ ]
 
-
 #
 default_values = {
     'debug': 0,
@@ -128,8 +130,8 @@ default_values = {
     'histogram_nozeroes': False,
     # filter outliers
     'histogram_sigma': None,
-    # use relative values
-    'histogram_ratio': False,
+    # histogram type
+    'histogram_type': 'raw',
     'xlabel': '--xlabel',
     'ylabel': [],
     'xlim': ['-', '-'],
@@ -178,7 +180,7 @@ def remove_outliers(xlist, sigma):
     return in_xlist, out_xlist, [min_value, max_value]
 
 
-def get_histogram(xlist, nbins, ratio, nozeroes, sigma, debug):
+def get_histogram(xlist, nbins, htype, nozeroes, sigma, debug):
     if sigma is not None:
         in_xlist, out_xlist, in_range = (
             remove_outliers(xlist, sigma))
@@ -217,9 +219,21 @@ def get_histogram(xlist, nbins, ratio, nozeroes, sigma, debug):
         else:
             ylist[-1] += 1
 
-    # support for ratio histograms
-    if ratio:
+    # support for raw, pdf (ratio), and cdf histograms
+    if htype == 'raw':
+        pass
+    elif htype == 'pdf':
         ylist = [(1.0 * y) / sum(ylist) for y in ylist]
+    elif htype == 'cdf':
+        # start with the pdf
+        ylist = [(1.0 * y) / sum(ylist) for y in ylist]
+        # add the pdf up
+        new_ylist = []
+        accum = 0.0
+        for y in ylist:
+            accum += y
+            new_ylist.append(accum)
+        ylist = new_ylist
 
     if nozeroes:
         real_xlist, ylist = zip(*[(x, y) for x, y in zip(real_xlist, ylist)
@@ -359,7 +373,7 @@ def parse_data(raw_data, ycol, xshift_local, yshift_local, options):
         statistics['stddev'] = np.std(xlist)
         xlist, ylist = get_histogram(xlist,
                                      options.histogram_bins,
-                                     options.histogram_ratio,
+                                     options.histogram_type,
                                      options.histogram_nozeroes,
                                      options.histogram_sigma,
                                      options.debug)
@@ -410,6 +424,9 @@ def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
         # look for named columns
         assert xcol in column_names, 'error: invalid xcol name: "%s"' % xcol
         xcol = column_names.index(xcol)
+    if ycol is None:
+        # used in histograms: value will be discarded
+        ycol = 0
     if is_int(ycol):
         ycol = int(ycol)
     else:
@@ -637,10 +654,12 @@ def get_options(argv):
                         default=default_values['histogram_sigma'],
                         metavar='SIGMA',
                         help='use avg += (SIGMA * stddev) to remove outliers',)
-    parser.add_argument('--histogram-ratio', action='store_const', const=True,
-                        dest='histogram_ratio',
-                        default=default_values['histogram_ratio'],
-                        help='use ratio for ylist instead of total number',)
+    parser.add_argument('--histogram-type', action='store', type=str,
+                        dest='histogram_type',
+                        default=default_values['histogram_type'],
+                        choices=VALID_HISTOGRAM_TYPES,
+                        metavar='[%s]' % (' | '.join(VALID_HISTOGRAM_TYPES,)),
+                        help='Histogram type',)
     parser.add_argument('--xlabel', action='store',
                         dest='xlabel', default=default_values['xlabel'],
                         metavar='XLABEL',
