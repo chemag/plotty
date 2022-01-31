@@ -20,7 +20,7 @@ from scipy.optimize import curve_fit
 import sys
 
 
-__version__ = '0.1'
+__version__ = '0.2'
 
 MAX_INFILE_LIST_LEN = 20
 SCALE_VALUES = (None, 'linear', 'log', 'symlog', 'logit')
