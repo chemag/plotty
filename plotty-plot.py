@@ -108,6 +108,7 @@ default_values = {
     'marker': '.',
     'figsize': matplotlib.rcParams['figure.figsize'],
     'title': '--title',
+    'header': False,
     'xcol': 0,
     'xcol2': None,
     'ycol': [],
@@ -252,13 +253,18 @@ def read_file(infile):
     return raw_data
 
 
-def parse_csv(raw_data, sep):
+def parse_csv(raw_data, sep, header):
     # split the input in lines
     lines = raw_data.split('\n')
     # look for named columns in line 0
     column_names = []
-    if lines[0].strip().startswith('#'):
-        column_names = lines[0].strip()[1:].strip().split(sep)
+    if lines[0].strip().startswith('#') or header:
+        column_names = lines[0].strip().split(sep)
+        if column_names[0].startswith('#'):
+            column_names[0] = column_names[0][1:]
+        # remove extra spaces
+        column_names = [colname.strip() for colname in column_names]
+        lines = lines[1:]
     # remove comment lines
     lines = [line for line in lines if not line.strip().startswith('#')]
     return column_names, lines
@@ -341,7 +347,8 @@ def parse_data(raw_data, ycol, xshift_local, yshift_local, options):
 
     # get starting data
     xlist, ylist = parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
-                                       sep2, xcol2, ycol2, xfmt, yfmt)
+                                       sep2, xcol2, ycol2, xfmt, yfmt,
+                                       options.header)
 
     # support for shift modes
     if xshift_local is not None:
@@ -404,9 +411,9 @@ def fmt_convert(item, fmt):
 
 
 def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
-                        sep2, xcol2, ycol2, xfmt, yfmt):
+                        sep2, xcol2, ycol2, xfmt, yfmt, header):
     # convert the raw data into lines
-    column_names, lines = parse_csv(raw_data, sep)
+    column_names, lines = parse_csv(raw_data, sep, header)
 
     # pre-filter lines
     if prefilter:
@@ -584,6 +591,9 @@ def get_options(argv):
                         dest='title', default=default_values['title'],
                         metavar='PLOTTITLE',
                         help='use PLOTTITLE plot title',)
+    parser.add_argument('--header', action='store_const', const=True,
+                        dest='header', default=default_values['header'],
+                        help='Read CSV header from first row (even if no #)',)
     parser.add_argument('--xcol', action='store',
                         dest='xcol', default=default_values['xcol'],
                         metavar='XCOL',
@@ -817,7 +827,7 @@ def build_positional_parameter(argv, parid):
 
 
 def batch_process_file(infile, sep, col, f):
-    flist = batch_process_data(read_file(infile), sep, col, f)
+    flist = batch_process_data(read_file(infile), sep, col, f, header=False)
     # make sure to include infile path
     dirname = os.path.dirname(infile)
     if dirname:
@@ -836,11 +846,11 @@ def batch_parse_line(line, sep, xcol):
     return x
 
 
-def batch_process_data(raw_data, sep, col, f):
+def batch_process_data(raw_data, sep, col, f, header):
     sep = sep if sep != '' else None
 
     # convert the raw data into lines
-    column_names, lines = parse_csv(raw_data, sep)
+    column_names, lines = parse_csv(raw_data, sep, header)
 
     # pre-filter lines
     if f:
@@ -876,9 +886,12 @@ def get_line_info(index, infile, options, batch_label_list):
         else:
             raise Exception('Error: need a ycol value')
     elif index < len(options.ycol):
-        ycol = int(options.ycol[index])
+        ycol = options.ycol[index]
     else:
-        ycol = int(options.ycol[-1])
+        ycol = options.ycol[-1]
+    # look for named columns
+    if is_int(ycol):
+        ycol = int(ycol)
 
     # 2. parameters that use a default if not enough
     # shifts
@@ -929,7 +942,7 @@ def main(argv):
     if options.batch_infile is not None:
         infile_list = batch_process_file(
             options.batch_infile, options.batch_sep, options.batch_col,
-            options.batch_filter)
+            options.batch_filter, options.header)
         batch_label_list = batch_process_data(
             read_file(options.batch_infile), options.batch_sep,
             options.batch_label_col, options.batch_filter)
