@@ -197,7 +197,8 @@ def get_histogram(xlist, nbins, htype, nozeroes, sigma, debug):
                           len(xlist), sigma,
                           in_range[0], in_range[1]))
             xlist = in_xlist
-
+    # remove nan values
+    xlist = [x for x in xlist if x is not np.nan]
     # get the extreme points
     minx = min(xlist)
     maxx = max(xlist)
@@ -403,6 +404,8 @@ def fmt_convert(item, fmt):
     if fmt == 'int':
         return int(float(item))
     elif fmt == 'float':
+        if not item:
+            return np.nan
         return float(item)
     elif fmt == 'unix':
         # convert unix timestamp to matplotlib datenum
