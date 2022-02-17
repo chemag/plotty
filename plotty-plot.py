@@ -40,17 +40,59 @@ VALID_LEGEND_LOCS = (
 )
 
 
-# https://matplotlib.org/2.0.2/api/colors_api.html
-VALID_MATPLOTLIB_COLORS = {
-    'b': 'blue',
-    'g': 'green',
-    'r': 'red',
-    'c': 'cyan',
-    'm': 'magenta',
-    'y': 'yellow',
-    'k': 'black',
-    'w': 'white',
+# https://matplotlib.org/stable/api/_as_gen/matplotlib.lines.Line2D.html
+# https://matplotlib.org/stable/gallery/lines_bars_and_markers/linestyles.html
+VALID_MATPLOTLIB_LINESTYLES = {
+    # make sure 2-character linestyles go before 1-character ones
+    '--': 'dashed',
+    '-.': 'dashdot',
+    '-': 'solid',
+    ':': 'dotted',
 }
+
+
+# https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html
+# https://matplotlib.org/stable/api/markers_api.html
+VALID_MATPLOTLIB_MARKERS = (
+    '.',
+    ',',
+    'o',
+    'v',
+    '^',
+    '<',
+    '>',
+    '1',
+    '2',
+    '3',
+    '4',
+    '8',
+    's',
+    'p',
+    'P',
+    '*',
+    'h',
+    'H',
+    '+',
+    'x',
+    'X',
+    'D',
+    'd',
+    '|',
+    '_',
+)
+
+
+# https://matplotlib.org/2.0.2/api/colors_api.html
+VALID_MATPLOTLIB_COLORS = (
+    'b',
+    'g',
+    'r',
+    'c',
+    'm',
+    'y',
+    'k',
+    'w',
+)
 
 
 VALID_COLUMN_FMTS = ('float', 'int', 'unix')
@@ -473,21 +515,45 @@ def create_graph_begin(options):
     return ax1
 
 
-def matplotlib_fmt_to_color(fmt, color):
-    if color is not None:
-        return color
-    # valid colors:
-    # (1) single letter (e.g. 'b'),
-    if len(fmt) >= 1 and fmt[0] in VALID_MATPLOTLIB_COLORS.keys():
-        return fmt[0]
-    # (2) full color name (e.g. 'blue'), or
-    for color in VALID_MATPLOTLIB_COLORS.values():
-        if fmt.startswith(color):
-            return color
-    # (3) pre-defined color (e.g. 'C0')
-    if len(fmt) >= 2 and fmt[0] == 'C' and fmt[1].isdigit():
-        return fmt[:2]
-    return fmt
+def matplotlib_fmt_parse(fmt, in_color):
+    # https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.plot.html
+    # A format string consists of a part for color, marker and line:
+    # fmt = '[marker][line][color]'
+    # Each of them is optional. If not provided, the value from the style
+    # cycle is used. Exception: If line is given, but no marker, the data
+    # will be a line without markers.
+    # Other combinations such as [color][marker][line] are also supported,
+    # but note that their parsing may be ambiguous.
+    marker, linestyle, color = None, None, None
+
+    # let's start with color in '[color][marker][line]'
+    # single letter (e.g. 'b'),
+    if len(fmt) >= 1 and fmt[0] in VALID_MATPLOTLIB_COLORS:
+        color = fmt[0]
+        fmt = fmt[1:]
+
+    # marker
+    if len(fmt) >= 1 and fmt[0] in VALID_MATPLOTLIB_MARKERS:
+        marker = fmt[0]
+        fmt = fmt[1:]
+    else:
+        marker = None
+
+    # linestyle
+    for ls in VALID_MATPLOTLIB_LINESTYLES.keys():
+        if fmt.startswith(ls):
+            linestyle = VALID_MATPLOTLIB_LINESTYLES[ls]
+            fmt = fmt[len(ls):]
+            break
+    else:
+        linestyle = None
+
+    # color
+    if color is None:
+        color = fmt
+    if in_color is not None:
+        color = in_color
+    return marker, linestyle, color
 
 
 # define a simple fitting function
@@ -497,8 +563,11 @@ def fit_function(x, a, b):
 
 def create_graph_draw(ax, xlist, ylist, statistics, fmt, color, label,
                       options):
-    color = matplotlib_fmt_to_color(fmt, color)
-    ax.plot(xlist, ylist, fmt, color=color, label=label)
+    marker, linestyle, color = matplotlib_fmt_parse(fmt, color)
+
+    ax.plot(xlist, ylist, color=color,
+            linestyle=linestyle, marker=marker,
+            label=label)
 
     if options.debug > 1:
         print('ax.plot(%r, %r, \'%s\', color=%s, label=%r)' % (
