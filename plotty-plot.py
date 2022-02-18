@@ -531,6 +531,10 @@ def matplotlib_fmt_parse(fmt, in_color):
     if len(fmt) >= 1 and fmt[0] in VALID_MATPLOTLIB_COLORS:
         color = fmt[0]
         fmt = fmt[1:]
+    # predefined colors (e.g. 'C0')
+    if len(fmt) >= 2 and fmt[0] == 'C' and fmt[1].isdigit():
+        color = fmt[:2]
+        fmt = fmt[2:]
 
     # marker
     if len(fmt) >= 1 and fmt[0] in VALID_MATPLOTLIB_MARKERS:
