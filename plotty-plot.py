@@ -853,8 +853,9 @@ def get_options(argv):
         if f is None:
             continue
         for fcol, fop, fval in f:
-            assert is_valid_op(fop), 'invalid filter: %s %s %s' % (
-                fcol, fop, fval)
+            assert is_valid_op(fop), (
+                'invalid op ("%s") in filter: "%s %s %s". Options: %r' % (
+                    fop, fcol, fop, fval, VALID_OPS))
     # check there is an input file
     assert options.infile or options.batch_infile, (
        'error: must provide valid input file')
