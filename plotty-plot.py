@@ -103,10 +103,10 @@ VALID_HISTOGRAM_TYPES = ('raw', 'pdf', 'cdf')
 
 # parameter notes
 # There are 3 type of parameters
-# * 1. single: same value for every line (e.g. --xfmt)
+# * 1. single: same value for every line (e.g. --xfmt, --ycol)
 # * 2. per-axis: need a different value per axis (e.g. --ylim)
 #   We use --twinx to create multiple axis
-# * 3. per-line: need a different value per line (e.g. --ycol, --fmt)
+# * 3. per-line: need a different value per line (e.g. --i, --fmt, --label)
 #   We attach lines to axis based on the exact parameter location.
 #   * subtypes depending on what to do if there are not as many occurrences
 #     as '-i' elements.
@@ -756,7 +756,7 @@ def get_options(argv):
     parser.add_argument('--ylabel', action='append',
                         dest='ylabel', default=default_values['ylabel'],
                         metavar='YLABEL',
-                        help='use YLABEL x label',)
+                        help='use YLABEL y label',)
     parser.add_argument('--add-mean', action='store_const',
                         dest='add_mean', const=True,
                         default=default_values['add_mean'],
