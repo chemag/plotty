@@ -802,10 +802,11 @@ def get_options(argv):
                         dest='yshift', default=default_values['yshift'],
                         metavar='YSHIFT',
                         help='use YSHIFT y shift(s)',)
-    parser.add_argument('--fmt', action='append',
-                        dest='fmt', default=default_values['fmt'],
-                        metavar='FMT',
-                        help='use FMT format(s) for plotting',)
+    parser.add_argument(
+        '--fmt', action='append',
+        dest='fmt', default=default_values['fmt'],
+        metavar='FMT',
+        help='use FMT format(s) for plotting ([marker][line][color])',)
     parser.add_argument('--color', action='append',
                         dest='color', default=default_values['color'],
                         metavar='COLOR',
