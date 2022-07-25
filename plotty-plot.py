@@ -181,6 +181,7 @@ default_values = {
     'ylim': [],
     'xscale': None,
     'yscale': None,
+    'xfactor': None,
     'add_mean': False,
     'add_median': False,
     'add_stddev': False,
@@ -364,13 +365,14 @@ def get_column(line, sep, col, sep2, col2):
     return val
 
 
-def parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2):
+def parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2, xfactor):
     if not line:
         # empty line
         return None, None
 
     # get x component
     x = i if xcol == -1 else get_column(line, sep, xcol, sep2, xcol2)
+    x = x if xfactor is None else float(x) * xfactor
 
     # get y component
     y = i if ycol == -1 else get_column(line, sep, ycol, sep2, ycol2)
@@ -391,7 +393,7 @@ def parse_data(raw_data, ycol, xshift_local, yshift_local, options):
     # get starting data
     xlist, ylist = parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
                                        sep2, xcol2, ycol2, xfmt, yfmt,
-                                       options.header)
+                                       options.xfactor, options.header)
 
     # support for shift modes
     if xshift_local is not None:
@@ -456,7 +458,7 @@ def fmt_convert(item, fmt):
 
 
 def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
-                        sep2, xcol2, ycol2, xfmt, yfmt, header):
+                        sep2, xcol2, ycol2, xfmt, yfmt, xfactor, header):
     # convert the raw data into lines
     column_names, lines = parse_csv(raw_data, sep, header)
 
@@ -488,7 +490,8 @@ def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
 
     # parse all the lines
     for i, line in enumerate(lines):
-        x, y = parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2)
+        x, y = parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2,
+                          xfactor)
         if x is not None and y is not None:
             # append values
             xlist.append(fmt_convert(x, xfmt))
@@ -785,6 +788,10 @@ def get_options(argv):
                         choices=SCALE_VALUES,
                         metavar='[%s]' % (' | '.join(scale_values_str,)),
                              help='yscale values',)
+    parser.add_argument('--xfactor', action='store', type=float,
+                        dest='xfactor', default=default_values['xfactor'],
+                        metavar='XFACTOR',
+                        help='use XFACTOR factor for the x-axis',)
     parser.add_argument('--yscale', action='store', type=str,
                         dest='yscale', default=default_values['yscale'],
                         choices=SCALE_VALUES,
