@@ -236,9 +236,9 @@ def get_histogram(xlist, nbins, htype, nozeroes, sigma, debug):
         else:
             if debug > 0:
                 print('Removing %i of %i values sigma: %f range: [%f, %f]' % (
-                          len(xlist) - len(in_xlist),
-                          len(xlist), sigma,
-                          in_range[0], in_range[1]))
+                    len(xlist) - len(in_xlist),
+                    len(xlist), sigma,
+                    in_range[0], in_range[1]))
             xlist = in_xlist
     # remove nan values
     xlist = [x for x in xlist if x is not np.nan]
@@ -652,213 +652,261 @@ def create_graph_end(ax, ylabel, xlim, ylim, xscale, yscale):
 def get_options(argv):
     # parse opts
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('-v', '--version', action='store_true',
-                        dest='version', default=False,
-                        help='Print version',)
-    parser.add_argument('-d', '--debug', action='count',
-                        dest='debug', default=default_values['debug'],
-                        help='Increase verbosity (multiple times for more)',)
-    parser.add_argument('--quiet', action='store_const',
-                        dest='debug', const=-1,
-                        help='Zero verbosity',)
-    parser.add_argument('--marker', action='store',
-                        dest='marker', default=default_values['marker'],
-                        metavar='MARKER',
-                        help='use MARKER as plot marker',)
-    parser.add_argument('--figsize', action='store', type=str, nargs=2,
-                        dest='figsize', default=default_values['figsize'],
-                        metavar=('WIDTH', 'HEIGHT'),
-                        help='set figsize to WIDTH x HEIGHT (default: %s)' % (
-                            default_values['figsize'],))
-    parser.add_argument('--title', action='store',
-                        dest='title', default=default_values['title'],
-                        metavar='PLOTTITLE',
-                        help='use PLOTTITLE plot title',)
-    parser.add_argument('--header', action='store_const', const=True,
-                        dest='header', default=default_values['header'],
-                        help='Read CSV header from first row (even if no #)',)
-    parser.add_argument('--xcol', action='store',
-                        dest='xcol', default=default_values['xcol'],
-                        metavar='XCOL',
-                        help='use XCOL x col',)
-    parser.add_argument('--xcol2', action='store', type=int,
-                        dest='xcol2', default=default_values['xcol2'],
-                        metavar='XCOL2',
-                        help='use XCOL2 for refining x col',)
-    parser.add_argument('--ycol', action='append',
-                        dest='ycol', default=default_values['ycol'],
-                        metavar='YCOL',
-                        help='use YCOL y col',)
-    parser.add_argument('--ycol2', action='store', type=int,
-                        dest='ycol2', default=default_values['ycol2'],
-                        metavar='YCOL2',
-                        help='use YCOL2 for refining y col',)
-    parser.add_argument('--xfmt', action='store', type=str,
-                        dest='xfmt', default=default_values['xfmt'],
-                        choices=VALID_COLUMN_FMTS,
-                        metavar='[%s]' % (' | '.join(VALID_COLUMN_FMTS,)),
-                        help='use XFMT format for x column',)
-    parser.add_argument('--yfmt', action='store', type=str,
-                        dest='yfmt', default=default_values['yfmt'],
-                        choices=VALID_COLUMN_FMTS,
-                        metavar='[%s]' % (' | '.join(VALID_COLUMN_FMTS,)),
-                        help='use YFMT format for y column',)
-    parser.add_argument('--fmtdate', action='store', type=str,
-                        dest='fmtdate', default=default_values['fmtdate'],
-                        metavar='FMTDATE',
-                        help='use FMTDATE for formatting unix dates',)
-    parser.add_argument('--ydelta', action='store_const', const=True,
-                        dest='ydelta', default=default_values['ydelta'],
-                        help='use $y[k] = (y[k] - y[k-1])$',)
-    parser.add_argument('--ycumulative', action='store_const', const=True,
-                        dest='ycumulative',
-                        default=default_values['ycumulative'],
-                        help='use $y[k] = \\sum_i=0^k y[i]$',)
-    parser.add_argument('--filter', action='append', type=str, nargs=3,
-                        dest='filter', default=default_values['filter'],
-                        metavar=('COL', 'OP', 'VAL'),
-                        help='select only rows where COL OP VAL is true',)
-    parser.add_argument('--sep', action='store', type=str,
-                        dest='sep', default=default_values['sep'],
-                        metavar='SEP',
-                        help='use SEP as separator',)
-    parser.add_argument('--sep2', action='store', type=str,
-                        dest='sep2', default=default_values['sep2'],
-                        metavar='SEP2',
-                        help='use SEP2 as alternate separator',)
-    parser.add_argument('--legend-loc', action='store', type=str,
-                        dest='legend_loc',
-                        default=default_values['legend_loc'],
-                        choices=VALID_LEGEND_LOCS,
-                        metavar='[%s]' % (' | '.join(VALID_LEGEND_LOCS,)),
-                        help='Legend location',)
-    parser.add_argument('--histogram', action='store_const', const=True,
-                        dest='histogram', default=default_values['histogram'],
-                        help='sort and bin xlist, get ylist as histogram',)
-    parser.add_argument('--histogram-bins', action='store', type=int,
-                        dest='histogram_bins',
-                        default=default_values['histogram_bins'],
-                        metavar='NBINS',
-                        help='use NBINS bins',)
-    parser.add_argument('--histogram-nozeroes', action='store_const',
-                        const=True,
-                        dest='histogram_nozeroes',
-                        default=default_values['histogram_nozeroes'],
-                        help='remove zeroes on the histogram',)
-    parser.add_argument('--histogram-sigma', action='store', type=float,
-                        dest='histogram_sigma',
-                        default=default_values['histogram_sigma'],
-                        metavar='SIGMA',
-                        help='use avg += (SIGMA * stddev) to remove outliers',)
-    parser.add_argument('--histogram-type', action='store', type=str,
-                        dest='histogram_type',
-                        default=default_values['histogram_type'],
-                        choices=VALID_HISTOGRAM_TYPES,
-                        metavar='[%s]' % (' | '.join(VALID_HISTOGRAM_TYPES,)),
-                        help='Histogram type',)
-    parser.add_argument('--xlabel', action='store',
-                        dest='xlabel', default=default_values['xlabel'],
-                        metavar='XLABEL',
-                        help='use XLABEL x label',)
-    parser.add_argument('--ylabel', action='append',
-                        dest='ylabel', default=default_values['ylabel'],
-                        metavar='YLABEL',
-                        help='use YLABEL y label',)
-    parser.add_argument('--add-mean', action='store_const',
-                        dest='add_mean', const=True,
-                        default=default_values['add_mean'],
-                        help='Add a line at the mean',)
-    parser.add_argument('--add-median', action='store_const',
-                        dest='add_median', const=True,
-                        default=default_values['add_median'],
-                        help='Add a line at the median',)
-    parser.add_argument('--add-stddev', action='store_const',
-                        dest='add_stddev', const=True,
-                        default=default_values['add_stddev'],
-                        help='Add 2 lines at mean +- stddev',)
-    parser.add_argument('--add-regression', action='store_const',
-                        dest='add_regression', const=True,
-                        default=default_values['add_regression'],
-                        help='Add a line at the linear regression',)
-    parser.add_argument('--xlim', action='store', type=str, nargs=2,
-                        dest='xlim', default=default_values['xlim'],
-                        metavar=('left', 'right'),)
-    parser.add_argument('--ylim', action='append', type=str, nargs=2,
-                        dest='ylim', default=default_values['ylim'],
-                        metavar=('bottom', 'top'),)
+    parser.add_argument(
+        '-v', '--version', action='store_true',
+        dest='version', default=False,
+        help='Print version',)
+    parser.add_argument(
+        '-d', '--debug', action='count',
+        dest='debug', default=default_values['debug'],
+        help='Increase verbosity (multiple times for more)',)
+    parser.add_argument(
+        '--quiet', action='store_const',
+        dest='debug', const=-1,
+        help='Zero verbosity',)
+    parser.add_argument(
+        '--marker', action='store',
+        dest='marker', default=default_values['marker'],
+        metavar='MARKER',
+        help='use MARKER as plot marker',)
+    parser.add_argument(
+        '--figsize', action='store', type=str, nargs=2,
+        dest='figsize', default=default_values['figsize'],
+        metavar=('WIDTH', 'HEIGHT'),
+        help='set figsize to WIDTH x HEIGHT (default: %s)' % (
+            default_values['figsize'],))
+    parser.add_argument(
+        '--title', action='store',
+        dest='title', default=default_values['title'],
+        metavar='PLOTTITLE',
+        help='use PLOTTITLE plot title',)
+    parser.add_argument(
+        '--header', action='store_const', const=True,
+        dest='header', default=default_values['header'],
+        help='Read CSV header from first row (even if no #)',)
+    parser.add_argument(
+        '--xcol', action='store',
+        dest='xcol', default=default_values['xcol'],
+        metavar='XCOL',
+        help='use XCOL x col',)
+    parser.add_argument(
+        '--xcol2', action='store', type=int,
+        dest='xcol2', default=default_values['xcol2'],
+        metavar='XCOL2',
+        help='use XCOL2 for refining x col',)
+    parser.add_argument(
+        '--ycol', action='append',
+        dest='ycol', default=default_values['ycol'],
+        metavar='YCOL',
+        help='use YCOL y col',)
+    parser.add_argument(
+        '--ycol2', action='store', type=int,
+        dest='ycol2', default=default_values['ycol2'],
+        metavar='YCOL2',
+        help='use YCOL2 for refining y col',)
+    parser.add_argument(
+        '--xfmt', action='store', type=str,
+        dest='xfmt', default=default_values['xfmt'],
+        choices=VALID_COLUMN_FMTS,
+        metavar='[%s]' % (' | '.join(VALID_COLUMN_FMTS,)),
+        help='use XFMT format for x column',)
+    parser.add_argument(
+        '--yfmt', action='store', type=str,
+        dest='yfmt', default=default_values['yfmt'],
+        choices=VALID_COLUMN_FMTS,
+        metavar='[%s]' % (' | '.join(VALID_COLUMN_FMTS,)),
+        help='use YFMT format for y column',)
+    parser.add_argument(
+        '--fmtdate', action='store', type=str,
+        dest='fmtdate', default=default_values['fmtdate'],
+        metavar='FMTDATE',
+        help='use FMTDATE for formatting unix dates',)
+    parser.add_argument(
+        '--ydelta', action='store_const', const=True,
+        dest='ydelta', default=default_values['ydelta'],
+        help='use $y[k] = (y[k] - y[k-1])$',)
+    parser.add_argument(
+        '--ycumulative', action='store_const', const=True,
+        dest='ycumulative',
+        default=default_values['ycumulative'],
+        help='use $y[k] = \\sum_i=0^k y[i]$',)
+    parser.add_argument(
+        '--filter', action='append', type=str, nargs=3,
+        dest='filter', default=default_values['filter'],
+        metavar=('COL', 'OP', 'VAL'),
+        help='select only rows where COL OP VAL is true',)
+    parser.add_argument(
+        '--sep', action='store', type=str,
+        dest='sep', default=default_values['sep'],
+        metavar='SEP',
+        help='use SEP as separator',)
+    parser.add_argument(
+        '--sep2', action='store', type=str,
+        dest='sep2', default=default_values['sep2'],
+        metavar='SEP2',
+        help='use SEP2 as alternate separator',)
+    parser.add_argument(
+        '--legend-loc', action='store', type=str,
+        dest='legend_loc',
+        default=default_values['legend_loc'],
+        choices=VALID_LEGEND_LOCS,
+        metavar='[%s]' % (' | '.join(VALID_LEGEND_LOCS,)),
+        help='Legend location',)
+    parser.add_argument(
+        '--histogram', action='store_const', const=True,
+        dest='histogram', default=default_values['histogram'],
+        help='sort and bin xlist, get ylist as histogram',)
+    parser.add_argument(
+        '--histogram-bins', action='store', type=int,
+        dest='histogram_bins',
+        default=default_values['histogram_bins'],
+        metavar='NBINS',
+        help='use NBINS bins',)
+    parser.add_argument(
+        '--histogram-nozeroes', action='store_const',
+        const=True,
+        dest='histogram_nozeroes',
+        default=default_values['histogram_nozeroes'],
+        help='remove zeroes on the histogram',)
+    parser.add_argument(
+        '--histogram-sigma', action='store', type=float,
+        dest='histogram_sigma',
+        default=default_values['histogram_sigma'],
+        metavar='SIGMA',
+        help='use avg += (SIGMA * stddev) to remove outliers',)
+    parser.add_argument(
+        '--histogram-type', action='store', type=str,
+        dest='histogram_type',
+        default=default_values['histogram_type'],
+        choices=VALID_HISTOGRAM_TYPES,
+        metavar='[%s]' % (' | '.join(VALID_HISTOGRAM_TYPES,)),
+        help='Histogram type',)
+    parser.add_argument(
+        '--xlabel', action='store',
+        dest='xlabel', default=default_values['xlabel'],
+        metavar='XLABEL',
+        help='use XLABEL x label',)
+    parser.add_argument(
+        '--ylabel', action='append',
+        dest='ylabel', default=default_values['ylabel'],
+        metavar='YLABEL',
+        help='use YLABEL y label',)
+    parser.add_argument(
+        '--add-mean', action='store_const',
+        dest='add_mean', const=True,
+        default=default_values['add_mean'],
+        help='Add a line at the mean',)
+    parser.add_argument(
+        '--add-median', action='store_const',
+        dest='add_median', const=True,
+        default=default_values['add_median'],
+        help='Add a line at the median',)
+    parser.add_argument(
+        '--add-stddev', action='store_const',
+        dest='add_stddev', const=True,
+        default=default_values['add_stddev'],
+        help='Add 2 lines at mean +- stddev',)
+    parser.add_argument(
+        '--add-regression', action='store_const',
+        dest='add_regression', const=True,
+        default=default_values['add_regression'],
+        help='Add a line at the linear regression',)
+    parser.add_argument(
+        '--xlim', action='store', type=str, nargs=2,
+        dest='xlim', default=default_values['xlim'],
+        metavar=('left', 'right'),)
+    parser.add_argument(
+        '--ylim', action='append', type=str, nargs=2,
+        dest='ylim', default=default_values['ylim'],
+        metavar=('bottom', 'top'),)
     scale_values_str = [str(item) for item in SCALE_VALUES]
-    parser.add_argument('--xscale', action='store', type=str,
-                        dest='xscale', default=default_values['xscale'],
-                        choices=SCALE_VALUES,
-                        metavar='[%s]' % (' | '.join(scale_values_str,)),
-                             help='yscale values',)
-    parser.add_argument('--xfactor', action='store', type=float,
-                        dest='xfactor', default=default_values['xfactor'],
-                        metavar='XFACTOR',
-                        help='use XFACTOR factor for the x-axis',)
-    parser.add_argument('--yscale', action='store', type=str,
-                        dest='yscale', default=default_values['yscale'],
-                        choices=SCALE_VALUES,
-                        metavar='[%s]' % (' | '.join(scale_values_str,)),
-                             help='yscale values',)
-    parser.add_argument('--twinx', action='count',
-                        dest='twinx', default=0,
-                        help='use twin y axes',)
+    parser.add_argument(
+        '--xscale', action='store', type=str,
+        dest='xscale', default=default_values['xscale'],
+        choices=SCALE_VALUES,
+        metavar='[%s]' % (' | '.join(scale_values_str,)),
+        help='yscale values',)
+    parser.add_argument(
+        '--xfactor', action='store', type=float,
+        dest='xfactor', default=default_values['xfactor'],
+        metavar='XFACTOR',
+        help='use XFACTOR factor for the x-axis',)
+    parser.add_argument(
+        '--yscale', action='store', type=str,
+        dest='yscale', default=default_values['yscale'],
+        choices=SCALE_VALUES,
+        metavar='[%s]' % (' | '.join(scale_values_str,)),
+        help='yscale values',)
+    parser.add_argument(
+        '--twinx', action='count',
+        dest='twinx', default=0,
+        help='use twin y axes',)
     # per-line arguments
-    parser.add_argument('--xshift', action='append',
-                        dest='xshift', default=default_values['xshift'],
-                        metavar='XSHIFT',
-                        help='use XSHIFT x shift(s)',)
-    parser.add_argument('--yshift', action='append',
-                        dest='yshift', default=default_values['yshift'],
-                        metavar='YSHIFT',
-                        help='use YSHIFT y shift(s)',)
+    parser.add_argument(
+        '--xshift', action='append',
+        dest='xshift', default=default_values['xshift'],
+        metavar='XSHIFT',
+        help='use XSHIFT x shift(s)',)
+    parser.add_argument(
+        '--yshift', action='append',
+        dest='yshift', default=default_values['yshift'],
+        metavar='YSHIFT',
+        help='use YSHIFT y shift(s)',)
     parser.add_argument(
         '--fmt', action='append',
         dest='fmt', default=default_values['fmt'],
         metavar='FMT',
         help='use FMT format(s) for plotting ([marker][line][color])',)
-    parser.add_argument('--color', action='append',
-                        dest='color', default=default_values['color'],
-                        metavar='COLOR',
-                        help='use COLOR color(s) for plotting',)
-    parser.add_argument('--label', action='append',
-                        dest='label', default=default_values['label'],
-                        metavar='LABEL',
-                        help='use LABEL label(s)',)
-    parser.add_argument('-i', '--infile', action='append',
-                        default=default_values['infile'],
-                        metavar='input-file',
-                        help='input file(s)',)
+    parser.add_argument(
+        '--color', action='append',
+        dest='color', default=default_values['color'],
+        metavar='COLOR',
+        help='use COLOR color(s) for plotting',)
+    parser.add_argument(
+        '--label', action='append',
+        dest='label', default=default_values['label'],
+        metavar='LABEL',
+        help='use LABEL label(s)',)
+    parser.add_argument(
+        '-i', '--infile', action='append',
+        default=default_values['infile'],
+        metavar='input-file',
+        help='input file(s)',)
     # batch conf arguments
-    parser.add_argument('--batch-infile', type=str,
-                        default=default_values['batch_infile'],
-                        metavar='batch_infile',
-                        help='conf input file',)
-    parser.add_argument('--batch-sep', action='store', type=str,
-                        dest='batch_sep', default=default_values['batch_sep'],
-                        metavar='SEP',
-                        help='use SEP as separator in the batch file',)
-    parser.add_argument('--batch-col', action='store',
-                        dest='batch_col', default=default_values['batch_col'],
-                        metavar='BATCHCOL',
-                        help='use BATCHCOL batch col',)
-    parser.add_argument('--batch-label-col', action='store',
-                        dest='batch_label_col',
-                        default=default_values['batch_label_col'],
-                        metavar='BATCHLABELCOL',
-                        help='use BATCHLABELCOL batch for label col',)
-    parser.add_argument('--batch-filter', action='append', type=str, nargs=3,
-                        dest='batch_filter',
-                        default=default_values['batch_filter'],
-                        metavar=('COL', 'OP', 'VAL'),
-                        help='select only batch rows where COL OP VAL '
-                        'is true',)
+    parser.add_argument(
+        '--batch-infile', type=str,
+        default=default_values['batch_infile'],
+        metavar='batch_infile',
+        help='conf input file',)
+    parser.add_argument(
+        '--batch-sep', action='store', type=str,
+        dest='batch_sep', default=default_values['batch_sep'],
+        metavar='SEP',
+        help='use SEP as separator in the batch file',)
+    parser.add_argument(
+        '--batch-col', action='store',
+        dest='batch_col', default=default_values['batch_col'],
+        metavar='BATCHCOL',
+        help='use BATCHCOL batch col',)
+    parser.add_argument(
+        '--batch-label-col', action='store',
+        dest='batch_label_col',
+        default=default_values['batch_label_col'],
+        metavar='BATCHLABELCOL',
+        help='use BATCHLABELCOL batch for label col',)
+    parser.add_argument(
+        '--batch-filter', action='append', type=str, nargs=3,
+        dest='batch_filter',
+        default=default_values['batch_filter'],
+        metavar=('COL', 'OP', 'VAL'),
+        help='select only batch rows where COL OP VAL '
+        'is true',)
     # output
-    parser.add_argument('outfile', type=str, nargs='?',
-                        default=default_values['outfile'],
-                        metavar='output-file',
-                        help='output file',)
+    parser.add_argument(
+        'outfile', type=str, nargs='?',
+        default=default_values['outfile'],
+        metavar='output-file',
+        help='output file',)
     # do the parsing
     options = parser.parse_args(argv[1:])
     if options.version:
@@ -874,7 +922,7 @@ def get_options(argv):
                     fop, fcol, fop, fval, VALID_OPS))
     # check there is an input file
     assert options.infile or options.batch_infile, (
-       'error: must provide valid input file')
+        'error: must provide valid input file')
     # check twinx
     if options.twinx > 0:
         # count the number of lines before and after the twinx
@@ -1051,9 +1099,9 @@ def main(argv):
     for index, infile in enumerate(infile_list):
         # get all the info from the current line
         ycol, xshift, yshift, label, fmt, color = (
-                get_line_info(index, infile, options, batch_label_list))
+            get_line_info(index, infile, options, batch_label_list))
         xlist, ylist, statistics = parse_data(
-                read_file(infile), ycol, xshift, yshift, options)
+            read_file(infile), ycol, xshift, yshift, options)
         xy_data.append([xlist, ylist, statistics, label, fmt, color])
 
     # 2. get all the per-axes info
