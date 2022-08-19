@@ -330,6 +330,10 @@ def statisticsIsClose(d1, d2):
 # compares float lists, returning True if they are the same, and False if
 # they are not
 def compareFloatList(l1, l2, rel_tol=1e-09):
+    # zip() only runs through the smallest list, so we need to check the
+    # list sizes first
+    if len(l1) != len(l2):
+        return False
     same_list = [math.isclose(f1, f2, rel_tol=rel_tol) for f1, f2 in
                  zip(l1, l2)]
     # reduce the list
