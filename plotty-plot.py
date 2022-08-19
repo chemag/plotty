@@ -1086,7 +1086,7 @@ def batch_process_data(raw_data, sep, col, f, header):
 
 def get_line_info(index, infile, options, batch_label_list):
     # 1. parameters that keep the last one if not enough
-    # ycol
+    # 1.1. ycol
     if len(options.ycol) == 0:
         # no ycol
         if options.histogram:
@@ -1102,7 +1102,7 @@ def get_line_info(index, infile, options, batch_label_list):
         ycol = int(ycol)
 
     # 2. parameters that use a default if not enough
-    # shifts
+    # 2.1. shifts
     xshift = None
     if index < len(options.xshift):
         xshift = float(options.xshift[index])
@@ -1113,7 +1113,7 @@ def get_line_info(index, infile, options, batch_label_list):
         print('shifting y by %f' % yshift)
 
     # 3. parameters that are derived automatically if not enough
-    # label
+    # 3.1. label
     if index < len(options.label):
         label = options.label[index]
         if label.lower() == 'none':
@@ -1123,7 +1123,7 @@ def get_line_info(index, infile, options, batch_label_list):
     else:
         label = os.path.basename(infile) if infile != '/dev/fd/0' else 'stdin'
 
-    # fmt
+    # 3.2. fmt
     default_fmt_list = ['C%i%s' % (i % 10, options.marker) for i in
                         range(MAX_INFILE_LIST_LEN)]
     if index < len(options.fmt):
@@ -1131,7 +1131,7 @@ def get_line_info(index, infile, options, batch_label_list):
     else:
         fmt = default_fmt_list[index]
 
-    # color
+    # 3.3. color
     color = options.color[index]
 
     return ycol, xshift, yshift, label, fmt, color
