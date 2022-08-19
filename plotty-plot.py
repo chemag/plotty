@@ -315,6 +315,8 @@ def parse_csv(raw_data, sep, header):
 
 
 def filter_line(line, sep, prefilter, column_names):
+    if prefilter is None:
+        return True
     for fcol, fop, fval in prefilter:
         if is_int(fcol):
             fcol = int(fcol)
@@ -447,7 +449,7 @@ def fmt_convert(item, fmt):
     if fmt == 'int':
         return int(float(item))
     elif fmt == 'float':
-        if not item:
+        if item is None:
             return np.nan
         return float(item)
     elif fmt == 'unix':
