@@ -107,7 +107,7 @@ parseDataTestCases = [
             'sep': ',',
             'xcol': 1,
             'ycol': 2,
-            'filter': ((5, 'ne', '1'),),
+            'filter': '5 ne 1',
         },
         'xlist': [1.0, 1.0, 1.0, 1.0, 1.0],
         'ylist': [1.0, 1.0, 1.0, 2.0, 2.0],
@@ -119,7 +119,7 @@ parseDataTestCases = [
             'sep': ',',
             'xcol': 1,
             'ycol': 2,
-            'filter': ((5, 'gt', '1'),),
+            'filter': '5 gt 1',
         },
         'xlist': [1.0, 1.0, 1.0, 1.0, 1.0],
         'ylist': [1.0, 1.0, 1.0, 2.0, 2.0],
@@ -127,18 +127,39 @@ parseDataTestCases = [
 
     },
     {
-        'name': 'prefilter multiple',
+        'name': 'prefilter multiple (and)',
         'parameters': {
             'sep': ',',
             'xcol': 1,
             'ycol': 2,
-            'filter': (
-                (5, 'gt', '1'),
-                (2, 'ne', '2'),
-            ),
+            'filter': '5 gt 1 and 2 ne 2',
         },
         'xlist': [1.0, 1.0, 1.0],
         'ylist': [1.0, 1.0, 1.0],
+        'statistics': {'median': 1.0, 'mean': 1.0, 'stddev': 0.0}
+    },
+    {
+        'name': 'prefilter multiple (or)',
+        'parameters': {
+            'sep': ',',
+            'xcol': 1,
+            'ycol': 2,
+            'filter': '5 gt 1 or 2 ne 2',
+        },
+        'xlist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+        'ylist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0],
+        'statistics': {'median': 1.0, 'mean': 1.2, 'stddev': 0.4}
+    },
+    {
+        'name': 'prefilter multiple (and/or)',
+        'parameters': {
+            'sep': ',',
+            'xcol': 1,
+            'ycol': 2,
+            'filter': '5 gt 1 and 2 ne 2 or 2 ne 2',
+        },
+        'xlist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+        'ylist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
         'statistics': {'median': 1.0, 'mean': 1.0, 'stddev': 0.0}
     },
     {
@@ -287,10 +308,7 @@ BatchProcessDataTestCases = [
         'parameters': {
             'sep': ',',
             'col': 2,
-            'f': (
-                (1, 'eq', 'bar'),
-                (0, 'lt', '3'),
-            ),
+            'f': '1 eq bar and 0 lt 3',
         },
         'infile_list': ['file1', 'file2']
     },
