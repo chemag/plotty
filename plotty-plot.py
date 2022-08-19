@@ -457,20 +457,7 @@ def fmt_convert(item, fmt):
     raise Exception('Error: invalid fmt (%s)' % fmt)
 
 
-def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
-                        sep2, xcol2, ycol2, xfmt, yfmt, xfactor, header):
-    # convert the raw data into lines
-    column_names, lines = parse_csv(raw_data, sep, header)
-
-    # pre-filter lines
-    if prefilter:
-        lines = filter_lines(lines, sep, prefilter, column_names)
-        if not lines:
-            raise Exception('Error: no data left after filtering')
-
-    xlist = []
-    ylist = []
-
+def get_column_ids(xcol, ycol, column_names):
     # get the column IDs
     if is_int(xcol):
         xcol = int(xcol)
@@ -488,7 +475,26 @@ def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
         assert ycol in column_names, 'error: invalid ycol name: "%s"' % ycol
         ycol = column_names.index(ycol)
 
+    return xcol, ycol
+
+
+def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
+                        sep2, xcol2, ycol2, xfmt, yfmt, xfactor, header):
+    # convert the raw data into lines
+    column_names, lines = parse_csv(raw_data, sep, header)
+
+    # pre-filter lines
+    if prefilter:
+        lines = filter_lines(lines, sep, prefilter, column_names)
+        if not lines:
+            raise Exception('Error: no data left after filtering')
+
+    # get column ids
+    xcol, ycol = get_column_ids(xcol, ycol, column_names)
+
     # parse all the lines
+    xlist = []
+    ylist = []
     for i, line in enumerate(lines):
         x, y = parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2,
                           xfactor)
