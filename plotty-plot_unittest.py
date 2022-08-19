@@ -8,12 +8,16 @@
 
 import importlib
 import math
+import os
+import shlex
+import string
+import tempfile
 import unittest
 
 plotty_plot = importlib.import_module('plotty-plot')
 
 
-data = """ # comment
+dataParseDataTestCases = """ # comment
 0,1,1,1,1,1,1,1,0,0,0:0:0:0
 0,1,1,1,1,1,1,1,1,1,11:111:1111:11111
 0,1,1,1,1,1,1,1,2,2,22:222:2222:22222
@@ -292,6 +296,117 @@ parseDataTestCases = [
     },
 ]
 
+dataMainTestCases = """#col0,col1,col2
+0,0,100,
+1,10,110,
+2,20,120,
+3,30,130,
+4,40,140,
+"""
+
+parseMainTestCases = [
+    {
+        'name': 'basic',
+        'argv': ('--title "mytitle" --xcol 0 --xlabel "xl1" '
+                 '--ycol 1 --ylabel "yl1" -i $file --fmt "g." --label "l0" '
+                 'out.png'),
+        'xy_data': [
+            [[0.0, 1.0, 2.0, 3.0, 4.0],  # xlist
+             [0.0, 10.0, 20.0, 30.0, 40.0],  # ylist
+             {},  # statistics
+             'l0',  # label
+             'g.',  # fmt
+             None,  # color
+             ],
+        ],
+    },
+    {
+        'name': 'basic (no x col)',
+        'argv': ('--title "mytitle" --xcol -1 --xlabel "xl1" '
+                 '--ycol 1 --ylabel "yl1" -i $file --fmt "g." --label "l0" '
+                 'out.png'),
+        'xy_data': [
+            [[0.0, 1.0, 2.0, 3.0, 4.0],  # xlist
+             [0.0, 10.0, 20.0, 30.0, 40.0],  # ylist
+             {},  # statistics
+             'l0',  # label
+             'g.',  # fmt
+             None,  # color
+             ],
+        ],
+    },
+    {
+        'name': 'basic (named xcol)',
+        'argv': ('--title "mytitle" --xcol col0 --xlabel "xl1" '
+                 '--ycol 1 --ylabel "yl1" -i $file --fmt "g." --label "l0" '
+                 'out.png'),
+        'xy_data': [
+            [[0.0, 1.0, 2.0, 3.0, 4.0],  # xlist
+             [0.0, 10.0, 20.0, 30.0, 40.0],  # ylist
+             {},  # statistics
+             'l0',  # label
+             'g.',  # fmt
+             None,  # color
+             ],
+        ],
+    },
+    {
+        'name': 'basic (named ycol)',
+        'argv': ('--title "mytitle" --xcol 0 --xlabel "xl1" '
+                 '--ycol col1 --ylabel "yl1" -i $file --fmt "g." --label "l0" '
+                 'out.png'),
+        'xy_data': [
+            [[0.0, 1.0, 2.0, 3.0, 4.0],  # xlist
+             [0.0, 10.0, 20.0, 30.0, 40.0],  # ylist
+             {},  # statistics
+             'l0',  # label
+             'g.',  # fmt
+             None,  # color
+             ],
+        ],
+    },
+    {
+        'name': 'basic (named xcol and ycol)',
+        'argv': ('--title "mytitle" --xcol col0 --xlabel "xl1" '
+                 '--ycol col1 --ylabel "yl1" -i $file --fmt "g." --label "l0" '
+                 'out.png'),
+        'xy_data': [
+            [[0.0, 1.0, 2.0, 3.0, 4.0],  # xlist
+             [0.0, 10.0, 20.0, 30.0, 40.0],  # ylist
+             {},  # statistics
+             'l0',  # label
+             'g.',  # fmt
+             None,  # color
+             ],
+        ],
+    },
+    {
+        'name': 'twinx',
+        'argv': ('--title "mytitle" --xcol 0 --xlabel "xcol" '
+                 # line 0
+                 '--ycol 1 --ylabel "yl1" -i $file --fmt "g." --label "l0" '
+                 '--twinx '
+                 '--ycol 2 --ylabel "yl2" -i $file --fmt "r." --label "l1" '
+                 'out.png'),
+        'xy_data': [
+            [[0.0, 1.0, 2.0, 3.0, 4.0],  # xlist
+             [0.0, 10.0, 20.0, 30.0, 40.0],  # ylist
+             {},  # statistics
+             'l0',  # label
+             'g.',  # fmt
+             None,  # color
+             ],
+            [[0.0, 1.0, 2.0, 3.0, 4.0],  # xlist
+             [100.0, 110.0, 120.0, 130.0, 140.0],  # ylist
+             {},  # statistics
+             'l1',  # label
+             'r.',  # fmt
+             None,  # color
+             ],
+        ],
+    },
+]
+
 
 batch_data = """#comment
 0,foo,file0
@@ -376,7 +491,8 @@ class MyTest(unittest.TestCase):
             ycol = options.ycol[0] if options.ycol else None
             prefilter = options.filter[0] if options.filter else None
             xlist, ylist, statistics = plotty_plot.parse_data(
-                data, ycol, xshift, yshift, prefilter, options)
+                dataParseDataTestCases, ycol, xshift, yshift, prefilter,
+                options)
             msg = 'unittest failed: %s' % test_case['name']
             self.assertTrue(compareFloatList(test_case['xlist'], xlist),
                             msg=msg)
@@ -384,6 +500,50 @@ class MyTest(unittest.TestCase):
                             msg=msg)
             self.assertTrue(statisticsIsClose(test_case['statistics'],
                                               statistics), msg=msg)
+
+    def testMain(self):
+        """Simplest main test (dry-run mode)."""
+        for test_case in parseMainTestCases:
+            print('...running %s' % test_case['name'])
+            argv_str = './plotty-plot.py ' + test_case['argv'] + ' --dry-run'
+            # replace the "$file" templates with tempfiles
+            # https://stackoverflow.com/questions/8300644/
+
+            class TempfileDict(dict):
+                tempfile_list = []
+
+                def __init__(self, file_contents):
+                    self.file_contents = file_contents
+
+                def __missing__(self, key):
+                    if key == 'file':
+                        fid, name = tempfile.mkstemp(dir='/tmp')
+                        f = os.fdopen(fid, 'w')
+                        f.write(self.file_contents)
+                        return name
+                    raise KeyError(key)
+
+            tempfiles = TempfileDict(dataMainTestCases)
+            argv_template = string.Template(argv_str)
+            argv_str = argv_template.substitute(tempfiles)
+            argv = shlex.split(argv_str)
+            xy_data = plotty_plot.main(argv)
+            msg = 'unittest failed: %s' % test_case['name']
+            # compare the xy_data values
+            self.assertTrue(len(test_case['xy_data']) == len(xy_data), msg)
+            for i in range(len(xy_data)):
+                expected = test_case['xy_data'][i]
+                value = xy_data[i]
+                # compare xlist
+                self.assertTrue(compareFloatList(expected[0], value[0]),
+                                msg=msg)
+                # compare ylist
+                self.assertTrue(compareFloatList(expected[1], value[1]),
+                                msg=msg)
+                # skip statistics
+                # compare label, fmt, color
+
+                self.assertTrue(expected[3:] == value[3:], msg=msg)
 
     def testBatchProcessData(self):
         """Simplest batch_process_data test."""

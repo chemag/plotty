@@ -147,6 +147,7 @@ VALID_HISTOGRAM_TYPES = ('raw', 'pdf', 'cdf')
 #
 default_values = {
     'debug': 0,
+    'dry_run': False,
     'marker': '.',
     'figsize': matplotlib.rcParams['figure.figsize'],
     'title': '--title',
@@ -741,6 +742,10 @@ def get_options(argv):
         dest='debug', const=-1,
         help='Zero verbosity',)
     parser.add_argument(
+        '--dry-run', action='store_true',
+        dest='dry_run', default=default_values['dry_run'],
+        help='Dry run',)
+    parser.add_argument(
         '--marker', action='store',
         dest='marker', default=default_values['marker'],
         metavar='MARKER',
@@ -1183,6 +1188,9 @@ def main(argv):
         xlist, ylist, statistics = parse_data(
             read_file(infile), ycol, xshift, yshift, prefilter, options)
         xy_data.append([xlist, ylist, statistics, label, fmt, color])
+
+    if options.dry_run:
+        return xy_data
 
     # 2. get all the per-axes info
     # create the axes
