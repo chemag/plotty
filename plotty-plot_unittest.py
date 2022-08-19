@@ -374,8 +374,9 @@ class MyTest(unittest.TestCase):
             argv = ['progname', ] + argv + ['-i', '/dev/null', 'outfile', ]
             options = plotty_plot.get_options(argv)
             ycol = options.ycol[0] if options.ycol else None
+            prefilter = options.filter[0] if options.filter else None
             xlist, ylist, statistics = plotty_plot.parse_data(
-                data, ycol, xshift, yshift, options)
+                data, ycol, xshift, yshift, prefilter, options)
             msg = 'unittest failed: %s' % test_case['name']
             self.assertTrue(compareFloatList(test_case['xlist'], xlist),
                             msg=msg)

@@ -106,15 +106,14 @@ VALID_HISTOGRAM_TYPES = ('raw', 'pdf', 'cdf')
 # * 1. single: same value for every line (e.g. --xfmt, --ycol)
 # * 2. per-axis: need a different value per axis (e.g. --ylim)
 #   We use --twinx to create multiple axis
-# * 3. per-line: need a different value per line (e.g. --i, --fmt, --label)
+# * 3. per-line: need a different value per line (e.g. --i, --fmt, --label,
+#   --filter))
 #   We attach lines to axis based on the exact parameter location.
 #   * subtypes depending on what to do if there are not as many occurrences
 #     as '-i' elements.
 #     * 3.1. keep the last one if not enough
 #     * 3.2. use default value if not enough
 #     * 3.3. positional parameters: attach to the previous '-i'
-# * 4. multiple applications:
-#   * e.g. filter (prefilter): allows multiple filtering
 #
 # List of per-axis and per-line parameters:
 # * used in parse_data()
@@ -127,6 +126,7 @@ VALID_HISTOGRAM_TYPES = ('raw', 'pdf', 'cdf')
 #   * label [v]
 #   * fmt [v]
 #   * color [v]
+#   * prefilter [v]
 #   * infile [v]
 # * used in create_graph_begin()
 #   * ylabel [v]
@@ -160,7 +160,6 @@ default_values = {
     'fmtdate': '%Y-%m-%d\n%H:%M:%S',
     'ydelta': False,
     'ycumulative': False,
-    'filter': None,
     # use '' to separate using None (any number of spaces/tabs)
     'sep': ',',
     'sep2': ',',
@@ -190,6 +189,7 @@ default_values = {
     'xshift': [],
     'yshift': [],
     'label': [],
+    'filter': [],
     'fmt': [],
     'color': [],
     'infile': [],
@@ -452,8 +452,8 @@ def parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2, xfactor):
     return x, y
 
 
-def parse_data(raw_data, ycol, xshift_local, yshift_local, options):
-    prefilter = Filter(options.filter)
+def parse_data(raw_data, ycol, xshift_local, yshift_local, prefilter, options):
+    prefilter = Filter(prefilter)
     sep = options.sep if options.sep != '' else None
     xcol = options.xcol
     xcol2 = options.xcol2
@@ -807,11 +807,6 @@ def get_options(argv):
         default=default_values['ycumulative'],
         help='use $y[k] = \\sum_i=0^k y[i]$',)
     parser.add_argument(
-        '--filter', action='store', type=str,
-        dest='filter', default=default_values['filter'],
-        metavar='FILTER-SPEC',
-        help='select only rows where FILTER-SPEC is true',)
-    parser.add_argument(
         '--sep', action='store', type=str,
         dest='sep', default=default_values['sep'],
         metavar='SEP',
@@ -944,6 +939,11 @@ def get_options(argv):
         metavar='LABEL',
         help='use LABEL label(s)',)
     parser.add_argument(
+        '--filter', action='append',
+        dest='filter', default=default_values['filter'],
+        metavar='FILTER-SPEC',
+        help='select only rows where FILTER-SPEC is true',)
+    parser.add_argument(
         '-i', '--infile', action='append',
         default=default_values['infile'],
         metavar='input-file',
@@ -988,9 +988,12 @@ def get_options(argv):
     if options.version:
         return options
     # check the filters
-    Filter(options.filter)
-
-    Filter(options.batch_filter)
+    if options.filter is not None:
+        for prefilter in options.filter:
+            Filter(prefilter)
+    if options.batch_filter is not None:
+        for prefilter in options.batch_filter:
+            Filter(prefilter)
     # check there is an input file
     assert options.infile or options.batch_infile, (
         'error: must provide valid input file')
@@ -1112,6 +1115,12 @@ def get_line_info(index, infile, options, batch_label_list):
         yshift = float(options.yshift[index])
         print('shifting y by %f' % yshift)
 
+    # 2.2. filter
+    prefilter = None
+    if index < len(options.filter):
+        prefilter = options.filter[index]
+        print('filtering input by %r' % prefilter)
+
     # 3. parameters that are derived automatically if not enough
     # 3.1. label
     if index < len(options.label):
@@ -1134,7 +1143,7 @@ def get_line_info(index, infile, options, batch_label_list):
     # 3.3. color
     color = options.color[index]
 
-    return ycol, xshift, yshift, label, fmt, color
+    return ycol, xshift, yshift, label, fmt, color, prefilter
 
 
 def main(argv):
@@ -1165,14 +1174,14 @@ def main(argv):
 
     # 1.2. get all the per-line info into xy_data
     # Includes `ycol`, `xlist` (x-axis values), `ylist` (y-axis values),
-    # `statistics`, `label`, `fmt`, `color`.
+    # `statistics`, `label`, `fmt`, `color`, and `filter`
     xy_data = []
     for index, infile in enumerate(infile_list):
         # get all the info from the current line
-        ycol, xshift, yshift, label, fmt, color = (
+        ycol, xshift, yshift, label, fmt, color, prefilter = (
             get_line_info(index, infile, options, batch_label_list))
         xlist, ylist, statistics = parse_data(
-            read_file(infile), ycol, xshift, yshift, options)
+            read_file(infile), ycol, xshift, yshift, prefilter, options)
         xy_data.append([xlist, ylist, statistics, label, fmt, color])
 
     # 2. get all the per-axes info
