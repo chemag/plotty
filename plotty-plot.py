@@ -369,10 +369,6 @@ def get_column(line, sep, col, sep2, col2):
 
 
 def parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2, xfactor):
-    if not line:
-        # empty line
-        return None, None
-
     # get x component
     x = i if xcol == -1 else get_column(line, sep, xcol, sep2, xcol2)
     x = x if xfactor is None else float(x) * xfactor
@@ -486,12 +482,6 @@ def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
     # convert the raw data into lines
     column_names, lines = parse_csv(raw_data, sep, header)
 
-    # pre-filter lines
-    if prefilter:
-        lines = filter_lines(lines, sep, prefilter, column_names)
-        if not lines:
-            raise Exception('Error: no data left after filtering')
-
     # get column ids
     xcol, ycol = get_column_ids(xcol, ycol, column_names)
 
@@ -499,6 +489,11 @@ def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
     xlist = []
     ylist = []
     for i, line in enumerate(lines):
+        if not line:
+            # empty line
+            continue
+        if not filter_line(line, sep, prefilter, column_names):
+            continue
         x, y = parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2,
                           xfactor)
         if x is not None and y is not None:
