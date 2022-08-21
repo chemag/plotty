@@ -48,6 +48,7 @@ VALID_MATPLOTLIB_LINESTYLES = {
     '-.': 'dashdot',
     '-': 'solid',
     ':': 'dotted',
+    ' ': 'None',
 }
 
 
