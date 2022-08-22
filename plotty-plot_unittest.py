@@ -111,7 +111,7 @@ parseDataTestCases = [
         'xlist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
         'ylist': [0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0],
     },
-    #{
+    # {
     #    'name': 'postfilter xshift',
     #    'parameters': {
     #        'sep': ',',
@@ -121,8 +121,8 @@ parseDataTestCases = [
     #    },
     #    'xlist': [10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0],
     #    'ylist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
-    #},
-    #{
+    # },
+    # {
     #    'name': 'postfilter yshift',
     #    'parameters': {
     #        'sep': ',',
@@ -132,7 +132,7 @@ parseDataTestCases = [
     #    },
     #    'xlist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
     #    'ylist': [10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0],
-    #},
+    # },
     {
         'name': 'postfilter mean',
         'parameters': {
@@ -431,7 +431,6 @@ parseMainTestCases = [
              [0.0, 10.0, 20.0, 30.0, 40.0],  # ylist
              'l0',  # label
              'g.',  # fmt
-             None,  # color
              ],
         ],
     },
@@ -445,7 +444,6 @@ parseMainTestCases = [
              [0.0, 10.0, 20.0, 30.0, 40.0],  # ylist
              'l0',  # label
              'g.',  # fmt
-             None,  # color
              ],
         ],
     },
@@ -459,7 +457,6 @@ parseMainTestCases = [
              [0.0, 10.0, 20.0, 30.0, 40.0],  # ylist
              'l0',  # label
              'g.',  # fmt
-             None,  # color
              ],
         ],
     },
@@ -473,7 +470,6 @@ parseMainTestCases = [
              [0.0, 10.0, 20.0, 30.0, 40.0],  # ylist
              'l0',  # label
              'g.',  # fmt
-             None,  # color
              ],
         ],
     },
@@ -487,7 +483,6 @@ parseMainTestCases = [
              [0.0, 10.0, 20.0, 30.0, 40.0],  # ylist
              'l0',  # label
              'g.',  # fmt
-             None,  # color
              ],
         ],
     },
@@ -504,13 +499,11 @@ parseMainTestCases = [
              [0.0, 10.0, 20.0, 30.0, 40.0],  # ylist
              'l0',  # label
              'g.',  # fmt
-             None,  # color
              ],
             [[0.0, 1.0, 2.0, 3.0, 4.0],  # xlist
              [100.0, 110.0, 120.0, 130.0, 140.0],  # ylist
              'l1',  # label
              'r.',  # fmt
-             None,  # color
              ],
         ],
     },
@@ -568,8 +561,6 @@ class MyTest(unittest.TestCase):
 
     def testGetDataBasic(self):
         """Simplest get_data test."""
-        xshift = 0
-        yshift = 0
         for test_case in parseDataTestCases:
             print('...running %s' % test_case['name'])
             argv = []
@@ -596,12 +587,11 @@ class MyTest(unittest.TestCase):
                     argv.append('%s' % v)
             # add progname and required args
             argv = ['progname', ] + argv + ['-i', '/dev/null', 'outfile', ]
-            options = config_lib.get_options(argv)
-            ycol = options.ycol[0] if options.ycol else None
-            prefilter = options.prefilter[0] if options.prefilter else None
-            xlist, ylist = plotty_plot.get_data(
-                dataGetDataTestCases, ycol, xshift, yshift, prefilter,
-                options)
+            gen_options, plot_line_list = config_lib.get_options(argv)
+            plot_pb, _ = plot_line_list[0]
+            line_pb = plot_pb.line[0]
+            xlist, ylist = plotty_plot.get_data_raw_data(
+                dataGetDataTestCases, plot_pb, line_pb, gen_options)
             msg = 'unittest failed: "%s"' % test_case['name']
             self.assertTrue(compareFloatList(test_case['xlist'], xlist),
                             msg=f'{msg} {test_case["xlist"]} != {xlist}')
@@ -647,9 +637,12 @@ class MyTest(unittest.TestCase):
                 # compare ylist
                 self.assertTrue(compareFloatList(expected[1], value[1]),
                                 msg=f'{msg} {expected[1]} != {value[1]}')
-                # compare label, fmt, color
-                self.assertTrue(expected[2:] == value[2:],
-                                msg=f'{msg} {expected[2:]} != {value[2:]}')
+                # compare label, fmt
+                line_pb = value[2]
+                self.assertTrue(expected[2] == line_pb.label,
+                                msg=f'{msg} {expected[2]} != {line_pb.label}')
+                self.assertTrue(expected[3] == line_pb.fmt,
+                                msg=f'{msg} {expected[3]} != {line_pb.fmt}')
 
     def _testBatchProcessData(self):
         """Simplest batch_process_data test."""

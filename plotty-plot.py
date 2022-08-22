@@ -25,8 +25,6 @@ utils = importlib.import_module('utils')
 
 __version__ = '0.2'
 
-MAX_INFILE_LIST_LEN = 20
-
 
 def remove_outliers(xlist, sigma):
     # remove values way over the average
@@ -41,10 +39,14 @@ def remove_outliers(xlist, sigma):
     return in_xlist, out_xlist, [min_value, max_value]
 
 
-def get_histogram(xlist, nbins, htype, nozeroes, sigma, debug):
-    if sigma is not None:
-        in_xlist, out_xlist, in_range = (
-            remove_outliers(xlist, sigma))
+def get_histogram(xlist, histogram_pb, debug):
+    nbins = histogram_pb.bins
+    nozeroes = histogram_pb.nozeroes
+    sigma = histogram_pb.sigma
+    htype = config_lib.get_histogram_type(histogram_pb)
+
+    if sigma is not None and sigma:
+        in_xlist, out_xlist, in_range = remove_outliers(xlist, sigma)
         if (len(xlist) - len(in_xlist)) / len(xlist) > 0.1:
             dropped_pct = 100. * (len(xlist) - len(in_xlist)) / len(xlist)
             print('Ignoring sigma removal of outliers (at sigma: %f would be '
@@ -147,7 +149,7 @@ def get_column(line, sep, col, sep2, col2):
         return None
     # get component
     val = line.split(sep)[col]
-    if col2 is not None:
+    if col2 is not None and col2:
         # use sep1, then sep2
         if not val:
             # empty column value
@@ -157,39 +159,44 @@ def get_column(line, sep, col, sep2, col2):
     return val
 
 
-def parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2, xfactor, yfactor):
+def parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2):
     # get x component
     x = i if xcol == -1 else get_column(line, sep, xcol, sep2, xcol2)
-    x = x if xfactor is None else float(x) * xfactor
-
     # get y component
     y = i if ycol == -1 else get_column(line, sep, ycol, sep2, ycol2)
-    y = y if yfactor is None else float(y) * yfactor
-
     return x, y
 
 
-def get_data(raw_data, xshift_local, yshift_local, prefilter, options):
-    prefilter = prefilter_lib.Prefilter(prefilter)
-    sep = options.sep if options.sep != '' else None
-    xcol = options.xcol
-    xcol2 = options.xcol2
-    sep2 = options.sep2 if options.sep2 != '' else None
-    ycol = options.ycol
-    ycol2 = options.ycol2
-    xfmt = options.xfmt
-    yfmt = options.yfmt
+def get_data(plot_pb, line_pb, gen_options):
+    # read the input file
+    infile = config_lib.get_parameter(plot_pb, line_pb, 'infile')
+    raw_data = read_file(infile)
+    return get_data_raw_data(raw_data, plot_pb, line_pb, gen_options)
 
+
+def get_data_raw_data(raw_data, plot_pb, line_pb, gen_options):
     # 1. convert the raw data into lines
-    column_names, lines = parse_csv(raw_data, sep, options.header)
+    sep = config_lib.get_parameter(plot_pb, line_pb, 'sep')
+    header = config_lib.get_parameter(plot_pb, line_pb, 'header')
+    column_names, lines = parse_csv(raw_data, sep, header)
 
     # 2. fix column names in the prefilter
+    prefilter_str = config_lib.get_parameter(plot_pb, line_pb, 'prefilter')
+    prefilter = prefilter_lib.Prefilter(prefilter_str)
     prefilter.fix_columns(column_names)
 
     # 3. get column ids
+    xcol = config_lib.get_parameter(plot_pb, line_pb, 'xcol')
+    ycol = config_lib.get_parameter(plot_pb, line_pb, 'ycol')
     xcol, ycol = get_column_ids(xcol, ycol, column_names)
 
     # 4. parse all the lines into (xlist, ylist)
+    sep2 = config_lib.get_parameter(plot_pb, line_pb, 'sep2')
+    sep2 = sep2 if sep2 != '' else None
+    xcol2 = config_lib.get_parameter(plot_pb, line_pb, 'xcol2')
+    ycol2 = config_lib.get_parameter(plot_pb, line_pb, 'ycol2')
+    xfmt = config_lib.get_parameter(plot_pb, line_pb, 'xfmt')
+    yfmt = config_lib.get_parameter(plot_pb, line_pb, 'yfmt')
     xlist = []
     ylist = []
     for i, line in enumerate(lines):
@@ -199,70 +206,74 @@ def get_data(raw_data, xshift_local, yshift_local, prefilter, options):
         # prefilter lines
         if not prefilter.match_line(line, sep):
             continue
-        x, y = parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2,
-                          options.xfactor, options.yfactor)
+        x, y = parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2)
         if x is not None and y is not None:
             # append values
             xlist.append(fmt_convert(x, xfmt))
             ylist.append(fmt_convert(y, yfmt))
 
     # 5. postfilter values
-    # 5.1. support for shift modes
-    if xshift_local is not None:
-        xlist = [(x + xshift_local) for x in xlist]
-    if yshift_local is not None:
-        ylist = [(y + yshift_local) for y in ylist]
-
-    # 5.2. support for ydelta (plotting `y[k] - y[k-1]` instead of `y[k]`)
-    if options.ydelta:
-        ylist = [y1 - y0 for y0, y1 in zip([ylist[0]] + ylist[:-1], ylist)]
-
-    # 5.3. support for ycumulative (plotting `\Sum y[k]` instead of `y[k]`)
-    if options.ycumulative:
-        new_ylist = []
-        for y in ylist:
-            prev_y = new_ylist[-1] if new_ylist else 0
-            new_ylist.append(y + prev_y)
-        ylist = new_ylist
-
-    # 5.4. support for replacements
-    if options.use_median:
-        median = np.median(ylist)
-        ylist = [median for _ in ylist]
-    if options.use_mean:
-        mean = np.mean(ylist)
-        ylist = [mean for _ in ylist]
-    if options.use_stddev:
-        stddev = np.std(ylist)
-        ylist = [stddev for _ in ylist]
-    if options.use_regression:
-        # curve fit (linear regression)
-        (a, b), _ = scipy.optimize.curve_fit(fit_function, xlist, ylist)
-        ylist = [fit_function(x, a, b) for x in xlist]
-    if options.use_moving_average is not None:
-        # Moving Average fit (linear regression)
-        ylist = get_moving_average(ylist, options.use_moving_average)
-    if options.use_ewma is not None:
-        # Exponentially-Weighted Moving Average
-        ylist = get_ewma(ylist, options.use_ewma)
-
-    # 5.5. support for histograms
-    if options.histogram:
-        xlist, ylist = get_histogram(xlist,
-                                     options.histogram_bins,
-                                     options.histogram_type,
-                                     options.histogram_nozeroes,
-                                     options.histogram_sigma,
-                                     options.debug)
-
+    postfilter_list = config_lib.get_parameter(plot_pb, line_pb, 'postfilter')
+    for postfilter_pb in postfilter_list.postfilter:
+        postfilter_type = config_lib.get_postfilter_type(postfilter_pb)
+        # 5.1. support for shift modes
+        if postfilter_type == 'xshift':
+            xshift = postfilter_pb.parameter
+            xlist = [(x + xshift) for x in xlist]
+        elif postfilter_type == 'yshift':
+            yshift = postfilter_pb.parameter
+            ylist = [(y + yshift) for y in ylist]
+        # 5.2. support for factor modes
+        elif postfilter_type == 'xfactor':
+            xfactor = postfilter_pb.parameter
+            xlist = [(x * float(xfactor)) for x in xlist]
+        elif postfilter_type == 'yfactor':
+            yfactor = postfilter_pb.parameter
+            ylist = [(y * float(yfactor)) for y in ylist]
+        # 5.3. support for ydelta (plotting `y[k] - y[k-1]` instead of `y[k]`)
+        elif postfilter_type == 'ydelta':
+            ylist = [y1 - y0 for y0, y1 in zip([ylist[0]] + ylist[:-1], ylist)]
+        # 5.4. support for ycumulative (plotting `\Sum y[k]` instead of `y[k]`)
+        elif postfilter_type == 'ycumulative':
+            new_ylist = []
+            for y in ylist:
+                prev_y = new_ylist[-1] if new_ylist else 0
+                new_ylist.append(y + prev_y)
+            ylist = new_ylist
+        # 5.5. support for replacements
+        elif postfilter_type == 'mean':
+            mean = np.mean(ylist)
+            ylist = [mean for _ in ylist]
+        elif postfilter_type == 'median':
+            median = np.median(ylist)
+            ylist = [median for _ in ylist]
+        elif postfilter_type == 'stddev':
+            stddev = np.std(ylist)
+            ylist = [stddev for _ in ylist]
+        elif postfilter_type == 'regression':
+            # curve fit (linear regression)
+            (a, b), _ = scipy.optimize.curve_fit(fit_function, xlist, ylist)
+            ylist = [fit_function(x, a, b) for x in xlist]
+        elif postfilter_type == 'moving_average':
+            # Moving Average fit (linear regression)
+            length = int(postfilter_pb.parameter)
+            ylist = get_moving_average(ylist, length)
+        elif postfilter_type == 'ewma':
+            # Exponentially-Weighted Moving Average
+            alpha = postfilter_pb.parameter
+            ylist = get_ewma(ylist, alpha)
+        # 5.6. support for histograms
+        elif postfilter_type == 'hist':
+            xlist, ylist = get_histogram(xlist, postfilter_pb.histogram,
+                                         gen_options.debug)
     return xlist, ylist
 
 
-def get_moving_average(ylist, n):
+def get_moving_average(ylist, length):
     new_ylist = []
     for i in range(len(ylist)):
         max_index = min(i, len(ylist) - 1)
-        min_index = max(0, i - n + 1)
+        min_index = max(0, i - length + 1)
         used_values = ylist[min_index:max_index + 1]
         new_val = sum(used_values) / len(used_values)
         new_ylist.append(new_val)
@@ -312,10 +323,9 @@ def get_column_ids(xcol, ycol, column_names):
     return xcol, ycol
 
 
-def create_graph_begin(options):
+def create_graph_begin(plot_pb):
     # create figure
-    figsize = tuple(float(v) for v in options.figsize)
-    fig = plt.figure(figsize=figsize)
+    fig = plt.figure(figsize=(plot_pb.figsize.width, plot_pb.figsize.height))
     # plt.gca().set_xlim([xstart, xstart + 1100000000])
     # plt.gca().set_ylim([0, 100])
     # # add a vertical line
@@ -323,15 +333,16 @@ def create_graph_begin(options):
     # # add a horizontal line
     # plt.axhline(y=1)
     ax1 = fig.add_subplot(111)
-    ax1.set_title(options.title)
-    ax1.set_xlabel(options.xlabel)
-    if options.xfmt == 'unix':
-        xfmt = md.DateFormatter(options.fmtdate)
+    ax1.set_title(plot_pb.title)
+    ax1.set_xlabel(plot_pb.xlabel)
+    xfmt = config_lib.get_column_fmt_type(plot_pb.xfmt)
+    if xfmt == 'unix':
+        xfmt = md.DateFormatter(plot_pb.fmtdate)
         ax1.xaxis.set_major_formatter(xfmt)
     return ax1
 
 
-def matplotlib_fmt_parse(fmt, in_color):
+def matplotlib_fmt_parse(fmt):
     # https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.plot.html
     # A format string consists of a part for color, marker and line:
     # fmt = '[marker][line][color]'
@@ -371,8 +382,6 @@ def matplotlib_fmt_parse(fmt, in_color):
     # color
     if color is None:
         color = fmt
-    if in_color is not None:
-        color = in_color
     return marker, linestyle, color
 
 
@@ -381,18 +390,17 @@ def fit_function(x, a, b):
     return a * x + b
 
 
-def create_graph_draw(ax, xlist, ylist, fmt, color, label, options):
-    marker, linestyle, color = matplotlib_fmt_parse(fmt, color)
+def create_graph_draw(ax, xlist, ylist, line_pb, plot_pb, gen_options):
+    marker, linestyle, color = matplotlib_fmt_parse(line_pb.fmt)
 
     ax.plot(xlist, ylist, color=color,
             linestyle=linestyle, marker=marker,
-            label=label)
+            label=line_pb.label)
 
-    if options.debug > 1:
-        print('ax.plot(%r, %r, \'%s\', color=%s, label=%r)' % (
-            list(xlist), ylist, fmt, color, label))
+    if gen_options.debug > 1:
+        print(f'ax.plot(xlist: {xlist} ylist: {ylist} label: {line_pb.label}')
 
-    if options.xfmt == 'int':
+    if plot_pb.xfmt == 'int':
         # make sure the ticks are all integers
         num_values = len(ax.get_xticks())
         step = int(math.ceil((int(math.ceil(ax.get_xticks()[-1])) -
@@ -403,25 +411,25 @@ def create_graph_draw(ax, xlist, ylist, fmt, color, label, options):
                             step))
 
 
-def create_graph_end(ax, ylabel, xlim, ylim, xscale, yscale):
+def create_graph_end(ax, ylabel, ylim, plot_pb):
     ax.set_ylabel(ylabel)
 
     # set xlim/ylim
-    if xlim[0] != '-':
-        ax.set_xlim(left=float(xlim[0]))
-    if xlim[1] != '-':
-        ax.set_xlim(right=float(xlim[1]))
+    if plot_pb.HasField('xlim') and plot_pb.xlim.min != '-':
+        ax.set_xlim(left=float(plot_pb.xlim.min))
+    if plot_pb.HasField('xlim') and plot_pb.xlim.max != '-':
+        ax.set_xlim(right=float(plot_pb.xlim.max))
 
-    if ylim[0] != '-':
+    if plot_pb.HasField('ylim') and ylim[0] != '-':
         ax.set_ylim(bottom=float(ylim[0]))
-    if ylim[1] != '-':
+    if plot_pb.HasField('ylim') and ylim[1] != '-':
         ax.set_ylim(top=float(ylim[1]))
 
     # set xscale/yscale
-    if xscale is not None:
-        ax.set_xscale(xscale)
-    if yscale is not None:
-        ax.set_yscale(yscale)
+    if not config_lib.scale_is_none(plot_pb.xscale):
+        ax.set_xscale(config_lib.get_scale_type(plot_pb.xscale))
+    if not config_lib.scale_is_none(plot_pb.yscale):
+        ax.set_yscale(config_lib.get_scale_type(plot_pb.yscale))
 
 
 def batch_process_file(infile, sep, col, f):
@@ -474,123 +482,81 @@ def batch_process_data(raw_data, sep, col, f, header):
     return flist
 
 
-def get_line_info(index, infile, options, batch_label_list):
-    # 1. parameters that keep the last one if not enough
-
-    # 2. parameters that use a default if not enough
-    # 2.1. shifts
-    xshift = None
-    if index < len(options.xshift):
-        xshift = float(options.xshift[index])
-        print('shifting x by %f' % xshift)
-    yshift = None
-    if index < len(options.yshift):
-        yshift = float(options.yshift[index])
-        print('shifting y by %f' % yshift)
-
-    # 2.2. prefilter
-    prefilter = None
-    if index < len(options.prefilter):
-        prefilter = options.prefilter[index]
-        print('filtering input by %r' % prefilter)
-
-    # 3. parameters that are derived automatically if not enough
-    # 3.1. label
-    if index < len(options.label):
-        label = options.label[index]
-        if label.lower() == 'none':
-            label = None
-    elif index < len(batch_label_list):
-        label = batch_label_list[index]
-    else:
-        label = os.path.basename(infile) if infile != '/dev/fd/0' else 'stdin'
-
-    # 3.2. fmt
-    default_fmt_list = ['C%i%s' % (i % 10, options.marker) for i in
-                        range(MAX_INFILE_LIST_LEN)]
-    if index < len(options.fmt):
-        fmt = options.fmt[index]
-    else:
-        fmt = default_fmt_list[index]
-
-    # 3.3. color
-    color = options.color[index]
-
-    return xshift, yshift, label, fmt, color, prefilter
-
-
 def main(argv):
     # parse options
-    options = config_lib.get_options(argv)
-    if options.version:
+    gen_options, plot_line_list = config_lib.get_options(argv)
+    if gen_options.version:
         print('version: %s' % __version__)
         sys.exit(0)
 
     # 1. get all the per-line info into xy_data
     # 1.1. get infile(s)/outfile
-    batch_label_list = []
-    if options.batch_infile is not None:
-        infile_list = batch_process_file(
-            options.batch_infile, options.batch_sep, options.batch_col,
-            options.batch_prefilter, options.header)
-        batch_label_list = batch_process_data(
-            read_file(options.batch_infile), options.batch_sep,
-            options.batch_label_col, options.batch_prefilter)
-    else:
-        infile_list = [('/dev/fd/0' if name == '-' else name) for name in
-                       options.infile]
-    if options.outfile == '-':
-        options.outfile = '/dev/fd/1'
+    # batch_label_list = []
+    # if options.batch_infile is not None:
+    #    infile_list = batch_process_file(
+    #        options.batch_infile, options.batch_sep, options.batch_col,
+    #        options.batch_prefilter, options.header)
+    #    batch_label_list = batch_process_data(
+    #        read_file(options.batch_infile), options.batch_sep,
+    #        options.batch_label_col, options.batch_prefilter)
+    # else:
 
-    if options.debug > 0:
-        print(options)
+    if gen_options.outfile == '-':
+        gen_options.outfile = '/dev/fd/1'
+
+    if gen_options.debug > 0:
+        print(f'gen_options: {gen_options}')
+        if gen_options.debug > 1:
+            print(f'plot_line_list: {plot_line_list}')
 
     # 1.2. get all the per-line info into xy_data
     # Includes `ycol`, `xlist` (x-axis values), `ylist` (y-axis values),
     # `label`, `fmt`, `color`, and `prefilter`
     xy_data = []
-    for index, infile in enumerate(infile_list):
+    for plot_pb, plot_line_id in plot_line_list:
+        _, line_id = plot_line_id.split('/')
+        line_pb = config_lib.get_line_pb(plot_pb, line_id)
+        # fix infile name
+        if line_pb.infile == '-':
+            line_pb.infile = '/dev/fd/0'
         # get all the info from the current line
-        xshift, yshift, label, fmt, color, prefilter = (
-            get_line_info(index, infile, options, batch_label_list))
-        xlist, ylist = get_data(
-            read_file(infile), xshift, yshift, prefilter, options)
-        xy_data.append([xlist, ylist, label, fmt, color])
+        xlist, ylist = get_data(plot_pb, line_pb, gen_options)
+        xy_data.append([xlist, ylist, line_pb])
 
-    if options.dry_run:
+    if gen_options.dry_run:
         return xy_data
 
     # 2. get all the per-axes info
     # create the main axis
     ax = []
     axinfo = []
-    ax.append(create_graph_begin(options))
-    ylabel = options.ylabel
-    ylim = options.ylim
+    ax.append(create_graph_begin(plot_pb))
+    ylabel = plot_pb.ylabel
+    ylim = (plot_pb.ylim.min, plot_pb.ylim.max)
+
     axinfo.append([ylabel, ylim])
     # create the twin axis
-    if options.twinx > 0:
+    if plot_pb.twinx:
         ax.append(ax[0].twinx())
-        ylabel = options.ylabel2
-        ylim = options.ylim2
-        axinfo.append([ylabel, ylim])
+        ylabel2 = plot_pb.ylabel2
+        ylim2 = (plot_pb.ylim2.min, plot_pb.ylim2.max)
+        axinfo.append([ylabel2, ylim2])
 
     # 3. create the graph
     # add each of the lines in xy_data
     axid = 0
-    for index, (xlist, ylist, label, fmt, color) in enumerate(xy_data):
-        if options.twinx > 0 and index == options.twinx:
-            axid += 1
-        create_graph_draw(ax[axid], xlist, ylist, fmt, color, label, options)
+    for (xlist, ylist, line_pb) in xy_data:
+        axid = 1 if line_pb.twinx else 0
+        create_graph_draw(ax[axid], xlist, ylist, line_pb, plot_pb,
+                          gen_options)
 
     # set final graph details
     for axid, (ylabel, ylim) in enumerate(axinfo):
         # set the values
-        create_graph_end(ax[axid], ylabel, options.xlim,
-                         ylim, options.xscale, options.yscale)
+        create_graph_end(ax[axid], ylabel, ylim, plot_pb)
 
     # set common legend
-    if options.legend_loc != 'none':
+    if plot_pb.HasField('legend_loc') and plot_pb.legend_loc != 'none':
         # https://stackoverflow.com/a/14344146
         lin_list = []
         leg_list = []
@@ -598,12 +564,12 @@ def main(argv):
             lin, leg = ax[axid].get_legend_handles_labels()
             lin_list += lin
             leg_list += leg
-        _ = ax[0].legend(lin_list, leg_list, loc=options.legend_loc)
+        _ = ax[0].legend(lin_list, leg_list, loc=plot_pb.legend_loc)
 
     # save graph
-    if options.debug > 0:
-        print('output is %s' % options.outfile)
-    plt.savefig('%s' % options.outfile)
+    if gen_options.debug > 0:
+        print('output is %s' % gen_options.outfile)
+    plt.savefig('%s' % gen_options.outfile)
 
 
 if __name__ == '__main__':

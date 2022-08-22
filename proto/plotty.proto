@@ -1,0 +1,105 @@
+syntax = "proto2";
+
+message Postfilter {
+  enum Type {
+    hist = 0;
+    xshift = 1;
+    yshift = 2;
+    xfactor = 3;
+    yfactor = 4;
+    ydelta = 5;
+    ycumulative = 6;
+    mean = 7;
+    median = 8;
+    stddev = 9;
+    regression = 10;
+    moving_average = 11;
+    ewma = 12;
+  }
+  optional Type type = 1;
+  optional Histogram histogram = 2;
+  optional float parameter = 3;
+}
+
+message PostfilterList {
+  repeated Postfilter postfilter = 1;
+}
+
+message Histogram {
+  optional bool enable = 1;
+  optional int32 bins = 2;
+  optional bool nozeroes = 3;
+  optional float sigma = 4;
+  enum Type {
+    raw = 0;
+    pdf = 1;
+    cdf = 2;
+  }
+  optional Type type = 5;
+}
+
+message Line {
+  optional string id = 1;
+  optional string label = 2;
+  optional string prefilter = 3;
+  optional string fmt = 4;
+  optional string infile = 5;
+  optional bool header = 6;
+  repeated Postfilter postfilter = 8;
+  optional string xcol = 9;
+  optional string xcol2 = 10;
+  optional string ycol = 11;
+  optional string ycol2 = 12;
+  optional string sep = 13;
+  optional string sep2 = 14;
+  optional bool twinx = 15;
+}
+
+message Plot {
+  optional string id = 1;
+  //optional string import_id = 2;
+  optional string marker = 3;
+  message FigSize {
+    optional float width = 1;
+    optional float height = 2;
+  }
+  optional FigSize figsize = 4;
+  optional string title = 5;
+  optional string legend_loc = 6;
+  optional string xlabel = 7;
+  optional string ylabel = 8;
+  optional bool twinx = 9;
+  optional string ylabel2 = 10;
+  message Limit {
+    optional string max = 1;
+    optional string min = 2;
+  }
+  optional Limit xlim = 11;
+  optional Limit ylim = 12;
+  //optional Limit xlim2 = 13;
+  optional Limit ylim2 = 14;
+  enum Scale {
+    none = 0;
+    linear = 1;
+    log = 2;
+    symlog = 3;
+    logit = 4;
+  }
+  optional Scale xscale = 15;
+  optional Scale yscale = 16;
+  enum ColumnFmt {
+    float = 0;
+    int = 1;
+    unix = 2;
+  }
+  optional ColumnFmt xfmt = 17;
+  optional ColumnFmt yfmt = 18;
+  optional string fmtdate = 19;
+  optional Line default_line = 20;
+  repeated Line line = 21;
+}
+
+message Plots {
+  // allow defining multiple plots
+  repeated Plot plot = 1;
+}
