@@ -10,6 +10,7 @@
 
 import argparse
 import datetime
+import importlib
 import math
 import matplotlib
 import matplotlib.pyplot as plt
@@ -18,6 +19,8 @@ import numpy as np
 import os
 from scipy.optimize import curve_fit
 import sys
+
+utils = importlib.import_module('utils')
 
 
 __version__ = '0.2'
@@ -370,7 +373,7 @@ class Prefilter:
             return
         new_item_list = []
         for fcol, fop, fval in self.item_list:
-            if is_int(fcol):
+            if utils.is_int(fcol):
                 fcol = int(fcol)
             else:
                 # look for named columns
@@ -511,12 +514,6 @@ def parse_data(raw_data, ycol, xshift_local, yshift_local, prefilter, options):
     return xlist, ylist, statistics
 
 
-def is_int(s):
-    if isinstance(s, int):
-        return True
-    return (s[1:].isdigit() if s[0] in ('-', '+') else s.isdigit())
-
-
 # convert axis format
 def fmt_convert(item, fmt):
     if fmt == 'int':
@@ -533,7 +530,7 @@ def fmt_convert(item, fmt):
 
 def get_column_ids(xcol, ycol, column_names):
     # get the column IDs
-    if is_int(xcol):
+    if utils.is_int(xcol):
         xcol = int(xcol)
     else:
         # look for named columns
@@ -542,7 +539,7 @@ def get_column_ids(xcol, ycol, column_names):
     if ycol is None:
         # used in histograms: value will be discarded
         ycol = 0
-    if is_int(ycol):
+    if utils.is_int(ycol):
         ycol = int(ycol)
     else:
         # look for named columns
@@ -1076,7 +1073,7 @@ def batch_process_data(raw_data, sep, col, f, header):
     flist = []
 
     # get the column IDs
-    if is_int(col):
+    if utils.is_int(col):
         col = int(col)
     else:
         # look for named columns
@@ -1107,7 +1104,7 @@ def get_line_info(index, infile, options, batch_label_list):
     else:
         ycol = options.ycol[-1]
     # look for named columns
-    if is_int(ycol):
+    if utils.is_int(ycol):
         ycol = int(ycol)
 
     # 2. parameters that use a default if not enough
