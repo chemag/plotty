@@ -518,8 +518,8 @@ class MyTest(unittest.TestCase):
                 def __missing__(self, key):
                     if key == 'file':
                         fid, name = tempfile.mkstemp(dir='/tmp')
-                        f = os.fdopen(fid, 'w')
-                        f.write(self.file_contents)
+                        with os.fdopen(fid, 'w') as f:
+                            f.write(self.file_contents)
                         return name
                     raise KeyError(key)
 
