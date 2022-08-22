@@ -108,7 +108,7 @@ VALID_HISTOGRAM_TYPES = ('raw', 'pdf', 'cdf')
 # * 2. per-axis: need a different value per axis (e.g. --ylim)
 #   We use --twinx to create multiple axis
 # * 3. per-line: need a different value per line (e.g. --i, --fmt, --label,
-#   --filter))
+#   --prefilter))
 #   We attach lines to axis based on the exact parameter location.
 #   * subtypes depending on what to do if there are not as many occurrences
 #     as '-i' elements.
@@ -191,7 +191,7 @@ default_values = {
     'xshift': [],
     'yshift': [],
     'label': [],
-    'filter': [],
+    'prefilter': [],
     'fmt': [],
     'color': [],
     'infile': [],
@@ -200,7 +200,7 @@ default_values = {
     'batch_sep': ',',
     'batch_col': None,
     'batch_label_col': None,
-    'batch_filter': None,
+    'batch_prefilter': None,
     # output parameter
     'outfile': None,
 }
@@ -309,9 +309,9 @@ def parse_csv(raw_data, sep, header):
     return column_names, lines
 
 
-# filter processing
-class Filter:
-    # filter ops
+# prefilter processing
+class Prefilter:
+    # prefilter ops
     VALID_FILTER_OPS = 'eq', 'ne', 'gt', 'ge', 'lt', 'le'
     VALID_BOOL_OPS = 'and', 'or'
 
@@ -320,14 +320,14 @@ class Filter:
         self.bool_list = []
         self.string = string
         if string is None:
-            # empty filter
+            # empty prefilter
             return
-        # FILTER-SPEC := ITEM [BOP ITEM]*
+        # PREFILTER-SPEC := ITEM [BOP ITEM]*
         # ITEM := FCOL FOP FVAL
         # where
         #   ITEM: a 3-element function returning a boolean
         #   FCOL: column ID (number or column name)
-        #   FOP: valid filter operation
+        #   FOP: valid prefilter operation
         #   FVAL: value
         #   BOP: valid bool operation
         # notes
@@ -337,10 +337,10 @@ class Filter:
         #     complex approach (tree structure). Not worth it yet.
         f = string.split()
         if len(f) == 0:
-            # empty filter
+            # empty prefilter
             self.string = None
             return
-        # break the filter in group of 3x items
+        # break the prefilter in group of 3x items
         assert len(f) % 4 == 3, f'incorrect number of elements in "{string}"'
         item = f[0:0+3]
         self.assert_item(*item)
@@ -357,12 +357,12 @@ class Filter:
 
     def assert_bool(self, bop):
         assert bop in self.VALID_BOOL_OPS, (
-            f'invalid bool operation ("{bop}") in filter. '
+            f'invalid bool operation ("{bop}") in prefilter. '
             f'Options: {self.VALID_BOOL_OPS}')
 
     def assert_item(self, fcol, fop, fval):
         assert fop in self.VALID_FILTER_OPS, (
-            f'invalid filter op ("{fop}") in filter: "{fcol} {fop} {fval}". '
+            f'invalid prefilter op ("{fop}") in "{fcol} {fop} {fval}". '
             f'Options: {self.VALID_FILTER_OPS}')
 
     def fix_columns(self, column_names):
@@ -390,7 +390,7 @@ class Filter:
                 return False
         # implement gt, ge, lt, le
         elif fop in ('gt', 'ge', 'lt', 'le'):
-            # make sure line val and filter val are numbers
+            # make sure line val and prefilter val are numbers
             lval = float(lval)
             fval = float(fval)
             if ((fop == 'ge' and lval < fval) or
@@ -455,7 +455,7 @@ def parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2, xfactor):
 
 
 def parse_data(raw_data, ycol, xshift_local, yshift_local, prefilter, options):
-    prefilter = Filter(prefilter)
+    prefilter = Prefilter(prefilter)
     sep = options.sep if options.sep != '' else None
     xcol = options.xcol
     xcol2 = options.xcol2
@@ -557,7 +557,7 @@ def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
     # convert the raw data into lines
     column_names, lines = parse_csv(raw_data, sep, header)
 
-    # fix column names in the filter
+    # fix column names in the prefilter
     prefilter.fix_columns(column_names)
 
     # get column ids
@@ -945,10 +945,10 @@ def get_options(argv):
         metavar='LABEL',
         help='use LABEL label(s)',)
     parser.add_argument(
-        '--filter', action='append',
-        dest='filter', default=default_values['filter'],
-        metavar='FILTER-SPEC',
-        help='select only rows where FILTER-SPEC is true',)
+        '--prefilter', action='append',
+        dest='prefilter', default=default_values['prefilter'],
+        metavar='PREFILTER-SPEC',
+        help='select only rows where PREFILTER-SPEC is true',)
     parser.add_argument(
         '-i', '--infile', action='append',
         default=default_values['infile'],
@@ -977,9 +977,9 @@ def get_options(argv):
         metavar='BATCHLABELCOL',
         help='use BATCHLABELCOL batch for label col',)
     parser.add_argument(
-        '--batch-filter', action='append', type=str, nargs=3,
-        dest='batch_filter',
-        default=default_values['batch_filter'],
+        '--batch-prefilter', action='append', type=str, nargs=3,
+        dest='batch_prefilter',
+        default=default_values['batch_prefilter'],
         metavar=('COL', 'OP', 'VAL'),
         help='select only batch rows where COL OP VAL '
         'is true',)
@@ -994,12 +994,12 @@ def get_options(argv):
     if options.version:
         return options
     # check the filters
-    if options.filter is not None:
-        for prefilter in options.filter:
-            Filter(prefilter)
-    if options.batch_filter is not None:
-        for prefilter in options.batch_filter:
-            Filter(prefilter)
+    if options.prefilter is not None:
+        for prefilter in options.prefilter:
+            Prefilter(prefilter)
+    if options.batch_prefilter is not None:
+        for prefilter in options.batch_prefilter:
+            Prefilter(prefilter)
     # check there is an input file
     assert options.infile or options.batch_infile, (
         'error: must provide valid input file')
@@ -1069,7 +1069,7 @@ def batch_process_data(raw_data, sep, col, f, header):
     # convert the raw data into lines
     column_names, lines = parse_csv(raw_data, sep, header)
 
-    # pre-filter lines
+    # prefilter lines
     if f:
         lines = filter_lines(lines, sep, f)
 
@@ -1121,10 +1121,10 @@ def get_line_info(index, infile, options, batch_label_list):
         yshift = float(options.yshift[index])
         print('shifting y by %f' % yshift)
 
-    # 2.2. filter
+    # 2.2. prefilter
     prefilter = None
-    if index < len(options.filter):
-        prefilter = options.filter[index]
+    if index < len(options.prefilter):
+        prefilter = options.prefilter[index]
         print('filtering input by %r' % prefilter)
 
     # 3. parameters that are derived automatically if not enough
@@ -1165,10 +1165,10 @@ def main(argv):
     if options.batch_infile is not None:
         infile_list = batch_process_file(
             options.batch_infile, options.batch_sep, options.batch_col,
-            options.batch_filter, options.header)
+            options.batch_prefilter, options.header)
         batch_label_list = batch_process_data(
             read_file(options.batch_infile), options.batch_sep,
-            options.batch_label_col, options.batch_filter)
+            options.batch_label_col, options.batch_prefilter)
     else:
         infile_list = [('/dev/fd/0' if name == '-' else name) for name in
                        options.infile]
@@ -1180,7 +1180,7 @@ def main(argv):
 
     # 1.2. get all the per-line info into xy_data
     # Includes `ycol`, `xlist` (x-axis values), `ylist` (y-axis values),
-    # `statistics`, `label`, `fmt`, `color`, and `filter`
+    # `statistics`, `label`, `fmt`, `color`, and `prefilter`
     xy_data = []
     for index, infile in enumerate(infile_list):
         # get all the info from the current line

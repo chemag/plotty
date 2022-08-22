@@ -111,7 +111,7 @@ parseDataTestCases = [
             'sep': ',',
             'xcol': 1,
             'ycol': 2,
-            'filter': '5 ne 1',
+            'prefilter': '5 ne 1',
         },
         'xlist': [1.0, 1.0, 1.0, 1.0, 1.0],
         'ylist': [1.0, 1.0, 1.0, 2.0, 2.0],
@@ -123,7 +123,7 @@ parseDataTestCases = [
             'sep': ',',
             'xcol': 1,
             'ycol': 2,
-            'filter': '5 gt 1',
+            'prefilter': '5 gt 1',
         },
         'xlist': [1.0, 1.0, 1.0, 1.0, 1.0],
         'ylist': [1.0, 1.0, 1.0, 2.0, 2.0],
@@ -136,7 +136,7 @@ parseDataTestCases = [
             'sep': ',',
             'xcol': 1,
             'ycol': 2,
-            'filter': '5 gt 1 and 2 ne 2',
+            'prefilter': '5 gt 1 and 2 ne 2',
         },
         'xlist': [1.0, 1.0, 1.0],
         'ylist': [1.0, 1.0, 1.0],
@@ -148,7 +148,7 @@ parseDataTestCases = [
             'sep': ',',
             'xcol': 1,
             'ycol': 2,
-            'filter': '5 gt 1 or 2 ne 2',
+            'prefilter': '5 gt 1 or 2 ne 2',
         },
         'xlist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
         'ylist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0],
@@ -160,7 +160,7 @@ parseDataTestCases = [
             'sep': ',',
             'xcol': 1,
             'ycol': 2,
-            'filter': '5 gt 1 and 2 ne 2 or 2 ne 2',
+            'prefilter': '5 gt 1 and 2 ne 2 or 2 ne 2',
         },
         'xlist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
         'ylist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
@@ -489,7 +489,7 @@ class MyTest(unittest.TestCase):
             argv = ['progname', ] + argv + ['-i', '/dev/null', 'outfile', ]
             options = plotty_plot.get_options(argv)
             ycol = options.ycol[0] if options.ycol else None
-            prefilter = options.filter[0] if options.filter else None
+            prefilter = options.prefilter[0] if options.prefilter else None
             xlist, ylist, statistics = plotty_plot.parse_data(
                 dataParseDataTestCases, ycol, xshift, yshift, prefilter,
                 options)
