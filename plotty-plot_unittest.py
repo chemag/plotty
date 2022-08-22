@@ -14,6 +14,7 @@ import string
 import tempfile
 import unittest
 
+config_lib = importlib.import_module('plotty-config')
 plotty_plot = importlib.import_module('plotty-plot')
 
 
@@ -487,7 +488,7 @@ class MyTest(unittest.TestCase):
                     argv.append('%s' % v)
             # add progname and required args
             argv = ['progname', ] + argv + ['-i', '/dev/null', 'outfile', ]
-            options = plotty_plot.get_options(argv)
+            options = config_lib.get_options(argv)
             ycol = options.ycol[0] if options.ycol else None
             prefilter = options.prefilter[0] if options.prefilter else None
             xlist, ylist, statistics = plotty_plot.parse_data(
