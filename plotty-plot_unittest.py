@@ -167,6 +167,39 @@ parseDataTestCases = [
         'ylist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
     },
     {
+        'name': 'postfilter moving average 1',
+        'parameters': {
+            'sep': ',',
+            'xcol': -1,
+            'ycol': 9,
+            'use-moving-average': 1,
+        },
+        'xlist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+        'ylist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+    },
+    {
+        'name': 'postfilter moving average 2',
+        'parameters': {
+            'sep': ',',
+            'xcol': -1,
+            'ycol': 9,
+            'use-moving-average': 2,
+        },
+        'xlist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+        'ylist': [0.0, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5],
+    },
+    {
+        'name': 'postfilter moving average 3',
+        'parameters': {
+            'sep': ',',
+            'xcol': -1,
+            'ycol': 9,
+            'use-moving-average': 3,
+        },
+        'xlist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+        'ylist': [0.0, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
+    },
+    {
         'name': 'postfilter ewma 1.0',
         'parameters': {
             'sep': ',',

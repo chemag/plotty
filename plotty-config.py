@@ -126,6 +126,7 @@ VALID_HISTOGRAM_TYPES = ('raw', 'pdf', 'cdf')
 #   * use_mean [ ]
 #   * use_stddev [ ]
 #   * use_regression [ ]
+#   * use_moving_average [ ]
 #   * use_ewma [ ]
 # * used in create_graph_end()
 #   * legend_loc [v]
@@ -176,6 +177,7 @@ default_values = {
     'use_median': False,
     'use_stddev': False,
     'use_regression': False,
+    'use_moving_average': None,
     'use_ewma': None,
     # per-line parameters
     'xshift': [],
@@ -357,6 +359,11 @@ def get_options(argv):
         dest='use_regression', const=True,
         default=default_values['use_regression'],
         help='Use a line at the linear regression',)
+    parser.add_argument(
+        '--use-moving-average', action='store', type=int,
+        dest='use_moving_average',
+        default=default_values['use_moving_average'],
+        help='Use a line at the moving average',)
     parser.add_argument(
         '--use-ewma', action='store', type=float,
         dest='use_ewma',

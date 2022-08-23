@@ -237,6 +237,9 @@ def get_data(raw_data, ycol, xshift_local, yshift_local, prefilter, options):
         # curve fit (linear regression)
         (a, b), _ = scipy.optimize.curve_fit(fit_function, xlist, ylist)
         ylist = [fit_function(x, a, b) for x in xlist]
+    if options.use_moving_average is not None:
+        # Moving Average fit (linear regression)
+        ylist = get_moving_average(ylist, options.use_moving_average)
     if options.use_ewma is not None:
         # Exponentially-Weighted Moving Average
         ylist = get_ewma(ylist, options.use_ewma)
@@ -251,6 +254,17 @@ def get_data(raw_data, ycol, xshift_local, yshift_local, prefilter, options):
                                      options.debug)
 
     return xlist, ylist
+
+
+def get_moving_average(ylist, n):
+    new_ylist = []
+    for i in range(len(ylist)):
+        max_index = min(i, len(ylist) - 1)
+        min_index = max(0, i - n + 1)
+        used_values = ylist[min_index:max_index + 1]
+        new_val = sum(used_values) / len(used_values)
+        new_ylist.append(new_val)
+    return new_ylist
 
 
 def get_ewma(ylist, alpha):
