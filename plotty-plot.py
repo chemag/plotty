@@ -168,7 +168,7 @@ def parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2, xfactor):
     return x, y
 
 
-def parse_data(raw_data, ycol, xshift_local, yshift_local, prefilter, options):
+def get_data(raw_data, ycol, xshift_local, yshift_local, prefilter, options):
     prefilter = prefilter_lib.Prefilter(prefilter)
     sep = options.sep if options.sep != '' else None
     xcol = options.xcol
@@ -178,22 +178,44 @@ def parse_data(raw_data, ycol, xshift_local, yshift_local, prefilter, options):
     xfmt = options.xfmt
     yfmt = options.yfmt
 
-    # get starting data
-    xlist, ylist = parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
-                                       sep2, xcol2, ycol2, xfmt, yfmt,
-                                       options.xfactor, options.header)
+    # 1. convert the raw data into lines
+    column_names, lines = parse_csv(raw_data, sep, options.header)
 
-    # support for shift modes
+    # 2. fix column names in the prefilter
+    prefilter.fix_columns(column_names)
+
+    # 3. get column ids
+    xcol, ycol = get_column_ids(xcol, ycol, column_names)
+
+    # 4. parse all the lines into (xlist, ylist)
+    xlist = []
+    ylist = []
+    for i, line in enumerate(lines):
+        if not line:
+            # empty line
+            continue
+        # prefilter lines
+        if not prefilter.match_line(line, sep):
+            continue
+        x, y = parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2,
+                          options.xfactor)
+        if x is not None and y is not None:
+            # append values
+            xlist.append(fmt_convert(x, xfmt))
+            ylist.append(fmt_convert(y, yfmt))
+
+    # 5. postfilter values
+    # 5.1. support for shift modes
     if xshift_local is not None:
         xlist = [(x + xshift_local) for x in xlist]
     if yshift_local is not None:
         ylist = [(y + yshift_local) for y in ylist]
 
-    # support for ydelta (plotting `y[k] - y[k-1]` instead of `y[k]`)
+    # 5.2. support for ydelta (plotting `y[k] - y[k-1]` instead of `y[k]`)
     if options.ydelta:
         ylist = [y1 - y0 for y0, y1 in zip([ylist[0]] + ylist[:-1], ylist)]
 
-    # support for ycumulative (plotting `\Sum y[k]` instead of `y[k]`)
+    # 5.3. support for ycumulative (plotting `\Sum y[k]` instead of `y[k]`)
     if options.ycumulative:
         new_ylist = []
         for y in ylist:
@@ -201,28 +223,31 @@ def parse_data(raw_data, ycol, xshift_local, yshift_local, prefilter, options):
             new_ylist.append(y + prev_y)
         ylist = new_ylist
 
-    # `statistics` is a dictionary containing some statistics about the
-    # distribution ('median', 'mean', 'stddev')
-    statistics = {}
+    # 5.4. support for replacements
+    if options.use_median:
+        median = np.median(ylist)
+        ylist = [median for _ in ylist]
+    if options.use_mean:
+        mean = np.mean(ylist)
+        ylist = [mean for _ in ylist]
+    if options.use_stddev:
+        stddev = np.std(ylist)
+        ylist = [stddev for _ in ylist]
+    if options.use_regression:
+        # curve fit
+        (a, b), _ = curve_fit(fit_function, xlist, ylist)
+        ylist = [fit_function(x, a, b) for x in xlist]
 
-    # support for histogram mode
+    # 5.5. support for histograms
     if options.histogram:
-        # calculate the histogram distro before binning the data
-        statistics['median'] = np.median(xlist)
-        statistics['mean'] = np.mean(xlist)
-        statistics['stddev'] = np.std(xlist)
         xlist, ylist = get_histogram(xlist,
                                      options.histogram_bins,
                                      options.histogram_type,
                                      options.histogram_nozeroes,
                                      options.histogram_sigma,
                                      options.debug)
-    else:
-        statistics['median'] = np.median(ylist)
-        statistics['mean'] = np.mean(ylist)
-        statistics['stddev'] = np.std(ylist)
 
-    return xlist, ylist, statistics
+    return xlist, ylist
 
 
 # convert axis format
@@ -258,35 +283,6 @@ def get_column_ids(xcol, ycol, column_names):
         ycol = column_names.index(ycol)
 
     return xcol, ycol
-
-
-def parse_data_internal(raw_data, prefilter, sep, xcol, ycol,
-                        sep2, xcol2, ycol2, xfmt, yfmt, xfactor, header):
-    # convert the raw data into lines
-    column_names, lines = parse_csv(raw_data, sep, header)
-
-    # fix column names in the prefilter
-    prefilter.fix_columns(column_names)
-
-    # get column ids
-    xcol, ycol = get_column_ids(xcol, ycol, column_names)
-
-    # parse all the lines
-    xlist = []
-    ylist = []
-    for i, line in enumerate(lines):
-        if not line:
-            # empty line
-            continue
-        if not prefilter.match_line(line, sep):
-            continue
-        x, y = parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2,
-                          xfactor)
-        if x is not None and y is not None:
-            # append values
-            xlist.append(fmt_convert(x, xfmt))
-            ylist.append(fmt_convert(y, yfmt))
-    return xlist, ylist
 
 
 def create_graph_begin(options):
@@ -358,8 +354,7 @@ def fit_function(x, a, b):
     return a * x + b
 
 
-def create_graph_draw(ax, xlist, ylist, statistics, fmt, color, label,
-                      options):
+def create_graph_draw(ax, xlist, ylist, fmt, color, label, options):
     marker, linestyle, color = matplotlib_fmt_parse(fmt, color)
 
     ax.plot(xlist, ylist, color=color,
@@ -379,38 +374,6 @@ def create_graph_draw(ax, xlist, ylist, statistics, fmt, color, label,
         ax.set_xticks(range(int(ax.get_xticks()[0]),
                             int(ax.get_xticks()[-1]),
                             step))
-    if options.histogram:
-        if options.add_median:
-            plt.axvline(statistics['median'], color=color, linestyle='dotted',
-                        linewidth=1)
-        if options.add_mean:
-            plt.axvline(statistics['mean'], color=color, linestyle='dotted',
-                        linewidth=1)
-        if options.add_stddev:
-            plt.axvline(statistics['mean'] + statistics['stddev'],
-                        color=color, linestyle='dotted', linewidth=1)
-            plt.axvline(statistics['mean'] - statistics['stddev'],
-                        color=color, linestyle='dotted', linewidth=1)
-    else:
-        if options.add_median:
-            plt.axhline(statistics['median'], color=color, linestyle='dotted',
-                        linewidth=1)
-        if options.add_mean:
-            plt.axhline(statistics['mean'], color=color, linestyle='dotted',
-                        linewidth=1)
-        if options.add_stddev:
-            plt.axhline(statistics['mean'] + statistics['stddev'],
-                        color=color, linestyle='dotted', linewidth=1)
-            plt.axhline(statistics['mean'] - statistics['stddev'],
-                        color=color, linestyle='dotted', linewidth=1)
-        if options.add_regression:
-            # curve fit
-            (a, b), _ = curve_fit(fit_function, xlist, ylist)
-            print('fit curve: y = %.5f * x + %.5f' % (a, b))
-            # define sequence of inputs
-            x_line = np.arange(min(xlist), max(xlist), 1)
-            y_line = fit_function(x_line, a, b)
-            plt.plot(x_line, y_line, '--', color='red')
 
 
 def create_graph_end(ax, ylabel, xlim, ylim, xscale, yscale):
@@ -572,15 +535,15 @@ def main(argv):
 
     # 1.2. get all the per-line info into xy_data
     # Includes `ycol`, `xlist` (x-axis values), `ylist` (y-axis values),
-    # `statistics`, `label`, `fmt`, `color`, and `prefilter`
+    # `label`, `fmt`, `color`, and `prefilter`
     xy_data = []
     for index, infile in enumerate(infile_list):
         # get all the info from the current line
         ycol, xshift, yshift, label, fmt, color, prefilter = (
             get_line_info(index, infile, options, batch_label_list))
-        xlist, ylist, statistics = parse_data(
+        xlist, ylist = get_data(
             read_file(infile), ycol, xshift, yshift, prefilter, options)
-        xy_data.append([xlist, ylist, statistics, label, fmt, color])
+        xy_data.append([xlist, ylist, label, fmt, color])
 
     if options.dry_run:
         return xy_data
@@ -601,12 +564,10 @@ def main(argv):
     # 3. create the graph
     # add each of the lines in xy_data
     axid = 0
-    for index, (xlist, ylist, statistics, label, fmt, color
-                ) in enumerate(xy_data):
+    for index, (xlist, ylist, label, fmt, color) in enumerate(xy_data):
         if options.twinx > 0 and index == options.twinx:
             axid += 1
-        create_graph_draw(ax[axid], xlist, ylist, statistics, fmt, color,
-                          label, options)
+        create_graph_draw(ax[axid], xlist, ylist, fmt, color, label, options)
 
     # set final graph details
     for axid, (ylabel, ylim) in enumerate(axinfo):

@@ -122,10 +122,10 @@ VALID_HISTOGRAM_TYPES = ('raw', 'pdf', 'cdf')
 # * used in create_graph_draw()
 #   * xfmt [ ]
 #   * histogram [ ]
-#   * add_median [ ]
-#   * add_mean [ ]
-#   * add_stddev [ ]
-#   * add_regression [ ]
+#   * use_median [ ]
+#   * use_mean [ ]
+#   * use_stddev [ ]
+#   * use_regression [ ]
 # * used in create_graph_end()
 #   * legend_loc [v]
 #   * xlim [ ]
@@ -171,10 +171,10 @@ default_values = {
     'xscale': None,
     'yscale': None,
     'xfactor': None,
-    'add_mean': False,
-    'add_median': False,
-    'add_stddev': False,
-    'add_regression': False,
+    'use_mean': False,
+    'use_median': False,
+    'use_stddev': False,
+    'use_regression': False,
     # per-line parameters
     'xshift': [],
     'yshift': [],
@@ -336,25 +336,25 @@ def get_options(argv):
         metavar='YLABEL',
         help='use YLABEL y label',)
     parser.add_argument(
-        '--add-mean', action='store_const',
-        dest='add_mean', const=True,
-        default=default_values['add_mean'],
-        help='Add a line at the mean',)
+        '--use-mean', action='store_const',
+        dest='use_mean', const=True,
+        default=default_values['use_mean'],
+        help='Use a line at the mean',)
     parser.add_argument(
-        '--add-median', action='store_const',
-        dest='add_median', const=True,
-        default=default_values['add_median'],
-        help='Add a line at the median',)
+        '--use-median', action='store_const',
+        dest='use_median', const=True,
+        default=default_values['use_median'],
+        help='Use a line at the median',)
     parser.add_argument(
-        '--add-stddev', action='store_const',
-        dest='add_stddev', const=True,
-        default=default_values['add_stddev'],
-        help='Add 2 lines at mean +- stddev',)
+        '--use-stddev', action='store_const',
+        dest='use_stddev', const=True,
+        default=default_values['use_stddev'],
+        help='Use 2 lines at mean +- stddev',)
     parser.add_argument(
-        '--add-regression', action='store_const',
-        dest='add_regression', const=True,
-        default=default_values['add_regression'],
-        help='Add a line at the linear regression',)
+        '--use-regression', action='store_const',
+        dest='use_regression', const=True,
+        default=default_values['use_regression'],
+        help='Use a line at the linear regression',)
     parser.add_argument(
         '--xlim', action='store', type=str, nargs=2,
         dest='xlim', default=default_values['xlim'],
