@@ -78,30 +78,97 @@ parseDataTestCases = [
         'xlist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
         'ylist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 8.0],
     },
+    # postfilter cases
     {
-        'name': 'ydelta',
+        'name': 'postfilter empty',
         'parameters': {
             'sep': ',',
-            'xcol': 1,
-            'ycol': 2,
+            'xcol': -1,
+            'ycol': 9,
+        },
+        'xlist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+        'ylist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+    },
+    {
+        'name': 'postfilter ydelta',
+        'parameters': {
+            'sep': ',',
+            'xcol': -1,
+            'ycol': 9,
             'ydelta': True,
         },
-        'xlist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-        'ylist': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+        'xlist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+        'ylist': [0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
     },
     {
-        'name': 'ycumulative',
+        'name': 'postfilter ycumulative',
         'parameters': {
             'sep': ',',
-            'xcol': 1,
-            'ycol': 2,
+            'xcol': -1,
+            'ycol': 9,
             'ycumulative': True,
         },
-        'xlist': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-        'ylist': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0, 12.0],
+        'xlist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+        'ylist': [0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0],
+    },
+    #{
+    #    'name': 'postfilter xshift',
+    #    'parameters': {
+    #        'sep': ',',
+    #        'xcol': -1,
+    #        'ycol': 9,
+    #        'xshift': 10,
+    #    },
+    #    'xlist': [10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0],
+    #    'ylist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+    #},
+    #{
+    #    'name': 'postfilter yshift',
+    #    'parameters': {
+    #        'sep': ',',
+    #        'xcol': -1,
+    #        'ycol': 9,
+    #        'yshift': 10,
+    #    },
+    #    'xlist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+    #    'ylist': [10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0],
+    #},
+    {
+        'name': 'postfilter mean',
+        'parameters': {
+            'sep': ',',
+            'xcol': -1,
+            'ycol': 9,
+            'use-mean': True,
+        },
+        'xlist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+        'ylist': [4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5],
     },
     {
-        'name': 'prefilter',
+        'name': 'postfilter median',
+        'parameters': {
+            'sep': ',',
+            'xcol': -1,
+            'ycol': 9,
+            'use-median': True,
+        },
+        'xlist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+        'ylist': [4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5],
+    },
+    {
+        'name': 'postfilter regression',
+        'parameters': {
+            'sep': ',',
+            'xcol': -1,
+            'ycol': 9,
+            'use-regression': True,
+        },
+        'xlist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+        'ylist': [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+    },
+    # prefilter cases
+    {
+        'name': 'prefilter basic',
         'parameters': {
             'sep': ',',
             'xcol': 1,
@@ -417,13 +484,13 @@ def statisticsIsClose(d1, d2):
 
 # compares float lists, returning True if they are the same, and False if
 # they are not
-def compareFloatList(l1, l2, rel_tol=1e-09):
+def compareFloatList(l1, l2, rel_tol=1e-09, abs_tol=0.001):
     # zip() only runs through the smallest list, so we need to check the
     # list sizes first
     if len(l1) != len(l2):
         return False
-    same_list = [math.isclose(f1, f2, rel_tol=rel_tol) for f1, f2 in
-                 zip(l1, l2)]
+    same_list = [math.isclose(f1, f2, rel_tol=rel_tol, abs_tol=abs_tol) for
+                 f1, f2 in zip(l1, l2)]
     # reduce the list
     return all(same_list)
 
