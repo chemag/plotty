@@ -468,9 +468,9 @@ class MyTest(unittest.TestCase):
                 options)
             msg = 'unittest failed: "%s"' % test_case['name']
             self.assertTrue(compareFloatList(test_case['xlist'], xlist),
-                            msg=msg)
+                            msg=f'{msg} {test_case["xlist"]} != {xlist}')
             self.assertTrue(compareFloatList(test_case['ylist'], ylist),
-                            msg=msg)
+                            msg=f'{msg} {test_case["ylist"]} != {ylist}')
 
     def testMain(self):
         """Simplest main test (dry-run mode)."""
@@ -507,12 +507,13 @@ class MyTest(unittest.TestCase):
                 value = xy_data[i]
                 # compare xlist
                 self.assertTrue(compareFloatList(expected[0], value[0]),
-                                msg=msg)
+                                msg=f'{msg} {expected[0]} != {value[0]}')
                 # compare ylist
                 self.assertTrue(compareFloatList(expected[1], value[1]),
-                                msg=msg)
+                                msg=f'{msg} {expected[1]} != {value[1]}')
                 # compare label, fmt, color
-                self.assertTrue(expected[2:] == value[2:], msg=msg)
+                self.assertTrue(expected[2:] == value[2:],
+                                msg=f'{msg} {expected[2:]} != {value[2:]}')
 
     def _testBatchProcessData(self):
         """Simplest batch_process_data test."""
@@ -521,7 +522,9 @@ class MyTest(unittest.TestCase):
             infile_list = plotty_plot.batch_process_data(
                 batch_data, **test_case['parameters'])
             msg = 'unittest failed: "%s"' % test_case['name']
-            self.assertEqual(test_case['infile_list'], infile_list, msg=msg)
+            self.assertEqual(
+                test_case['infile_list'], infile_list,
+                msg=f'{msg} {test_case["infile_list"]} != {infile_list}')
 
 
 if __name__ == '__main__':
