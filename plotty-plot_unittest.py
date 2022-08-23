@@ -546,7 +546,7 @@ class MyTest(unittest.TestCase):
 
                 self.assertTrue(expected[3:] == value[3:], msg=msg)
 
-    def testBatchProcessData(self):
+    def _testBatchProcessData(self):
         """Simplest batch_process_data test."""
         for test_case in BatchProcessDataTestCases:
             print('...running %s' % test_case['name'])
