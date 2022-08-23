@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as md
 import numpy as np
 import os
-from scipy.optimize import curve_fit
+import scipy.optimize
 import sys
 
 config_lib = importlib.import_module('plotty-config')
@@ -235,7 +235,7 @@ def get_data(raw_data, ycol, xshift_local, yshift_local, prefilter, options):
         ylist = [stddev for _ in ylist]
     if options.use_regression:
         # curve fit
-        (a, b), _ = curve_fit(fit_function, xlist, ylist)
+        (a, b), _ = scipy.optimize.curve_fit(fit_function, xlist, ylist)
         ylist = [fit_function(x, a, b) for x in xlist]
 
     # 5.5. support for histograms
