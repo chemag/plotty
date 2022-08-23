@@ -234,9 +234,12 @@ def get_data(raw_data, ycol, xshift_local, yshift_local, prefilter, options):
         stddev = np.std(ylist)
         ylist = [stddev for _ in ylist]
     if options.use_regression:
-        # curve fit
+        # curve fit (linear regression)
         (a, b), _ = scipy.optimize.curve_fit(fit_function, xlist, ylist)
         ylist = [fit_function(x, a, b) for x in xlist]
+    if options.use_ewma is not None:
+        # Exponentially-Weighted Moving Average
+        ylist = get_ewma(ylist, options.use_ewma)
 
     # 5.5. support for histograms
     if options.histogram:
@@ -248,6 +251,14 @@ def get_data(raw_data, ycol, xshift_local, yshift_local, prefilter, options):
                                      options.debug)
 
     return xlist, ylist
+
+
+def get_ewma(ylist, alpha):
+    new_ylist = [ylist[0]]
+    for y in ylist[1:]:
+        new_val = alpha * y + (1.0 - alpha) * new_ylist[-1]
+        new_ylist.append(new_val)
+    return new_ylist
 
 
 # convert axis format

@@ -126,6 +126,7 @@ VALID_HISTOGRAM_TYPES = ('raw', 'pdf', 'cdf')
 #   * use_mean [ ]
 #   * use_stddev [ ]
 #   * use_regression [ ]
+#   * use_ewma [ ]
 # * used in create_graph_end()
 #   * legend_loc [v]
 #   * xlim [ ]
@@ -175,6 +176,7 @@ default_values = {
     'use_median': False,
     'use_stddev': False,
     'use_regression': False,
+    'use_ewma': None,
     # per-line parameters
     'xshift': [],
     'yshift': [],
@@ -355,6 +357,11 @@ def get_options(argv):
         dest='use_regression', const=True,
         default=default_values['use_regression'],
         help='Use a line at the linear regression',)
+    parser.add_argument(
+        '--use-ewma', action='store', type=float,
+        dest='use_ewma',
+        default=default_values['use_ewma'],
+        help='Use a line at the ewma',)
     parser.add_argument(
         '--xlim', action='store', type=str, nargs=2,
         dest='xlim', default=default_values['xlim'],
