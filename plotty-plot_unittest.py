@@ -494,7 +494,7 @@ class MyTest(unittest.TestCase):
             xlist, ylist, statistics = plotty_plot.parse_data(
                 dataParseDataTestCases, ycol, xshift, yshift, prefilter,
                 options)
-            msg = 'unittest failed: %s' % test_case['name']
+            msg = 'unittest failed: "%s"' % test_case['name']
             self.assertTrue(compareFloatList(test_case['xlist'], xlist),
                             msg=msg)
             self.assertTrue(compareFloatList(test_case['ylist'], ylist),
@@ -529,7 +529,7 @@ class MyTest(unittest.TestCase):
             argv_str = argv_template.substitute(tempfiles)
             argv = shlex.split(argv_str)
             xy_data = plotty_plot.main(argv)
-            msg = 'unittest failed: %s' % test_case['name']
+            msg = 'unittest failed: "%s"' % test_case['name']
             # compare the xy_data values
             self.assertTrue(len(test_case['xy_data']) == len(xy_data), msg)
             for i in range(len(xy_data)):
@@ -552,7 +552,7 @@ class MyTest(unittest.TestCase):
             print('...running %s' % test_case['name'])
             infile_list = plotty_plot.batch_process_data(
                 batch_data, **test_case['parameters'])
-            msg = 'unittest failed: %s' % test_case['name']
+            msg = 'unittest failed: "%s"' % test_case['name']
             self.assertEqual(test_case['infile_list'], infile_list, msg=msg)
 
 
