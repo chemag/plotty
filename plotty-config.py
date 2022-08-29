@@ -92,7 +92,7 @@ VALID_HISTOGRAM_TYPES = ('raw', 'pdf', 'cdf')
 
 # parameter notes
 # There are 3 type of parameters
-# * 1. single: same value for every line (e.g. --xfmt, --ycol)
+# * 1. single: same value for every line (e.g. --xfmt, --xcol, --ycol)
 # * 2. per-axis: need a different value per axis (e.g. --ylim, --ylim2,
 #   --ylabel, --ylabel2)
 #   We use --twinx to create multiple axis
@@ -148,7 +148,7 @@ default_values = {
     'header': False,
     'xcol': 0,
     'xcol2': None,
-    'ycol': [],
+    'ycol': 0,
     'ycol2': None,
     'xfmt': 'float',
     'yfmt': 'float',
@@ -254,7 +254,7 @@ def get_options(argv):
         metavar='XCOL2',
         help='use XCOL2 for refining x col',)
     parser.add_argument(
-        '--ycol', action='append',
+        '--ycol', action='store',
         dest='ycol', default=default_values['ycol'],
         metavar='YCOL',
         help='use YCOL y col',)

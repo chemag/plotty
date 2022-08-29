@@ -169,12 +169,13 @@ def parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2, xfactor, yfactor):
     return x, y
 
 
-def get_data(raw_data, ycol, xshift_local, yshift_local, prefilter, options):
+def get_data(raw_data, xshift_local, yshift_local, prefilter, options):
     prefilter = prefilter_lib.Prefilter(prefilter)
     sep = options.sep if options.sep != '' else None
     xcol = options.xcol
     xcol2 = options.xcol2
     sep2 = options.sep2 if options.sep2 != '' else None
+    ycol = options.ycol
     ycol2 = options.ycol2
     xfmt = options.xfmt
     yfmt = options.yfmt
@@ -475,20 +476,6 @@ def batch_process_data(raw_data, sep, col, f, header):
 
 def get_line_info(index, infile, options, batch_label_list):
     # 1. parameters that keep the last one if not enough
-    # 1.1. ycol
-    if len(options.ycol) == 0:
-        # no ycol
-        if options.histogram:
-            ycol = options.xcol
-        else:
-            raise Exception('Error: need a ycol value')
-    elif index < len(options.ycol):
-        ycol = options.ycol[index]
-    else:
-        ycol = options.ycol[-1]
-    # look for named columns
-    if utils.is_int(ycol):
-        ycol = int(ycol)
 
     # 2. parameters that use a default if not enough
     # 2.1. shifts
@@ -529,7 +516,7 @@ def get_line_info(index, infile, options, batch_label_list):
     # 3.3. color
     color = options.color[index]
 
-    return ycol, xshift, yshift, label, fmt, color, prefilter
+    return xshift, yshift, label, fmt, color, prefilter
 
 
 def main(argv):
@@ -564,10 +551,10 @@ def main(argv):
     xy_data = []
     for index, infile in enumerate(infile_list):
         # get all the info from the current line
-        ycol, xshift, yshift, label, fmt, color, prefilter = (
+        xshift, yshift, label, fmt, color, prefilter = (
             get_line_info(index, infile, options, batch_label_list))
         xlist, ylist = get_data(
-            read_file(infile), ycol, xshift, yshift, prefilter, options)
+            read_file(infile), xshift, yshift, prefilter, options)
         xy_data.append([xlist, ylist, label, fmt, color])
 
     if options.dry_run:
