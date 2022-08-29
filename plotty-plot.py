@@ -157,13 +157,14 @@ def get_column(line, sep, col, sep2, col2):
     return val
 
 
-def parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2, xfactor):
+def parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2, xfactor, yfactor):
     # get x component
     x = i if xcol == -1 else get_column(line, sep, xcol, sep2, xcol2)
     x = x if xfactor is None else float(x) * xfactor
 
     # get y component
     y = i if ycol == -1 else get_column(line, sep, ycol, sep2, ycol2)
+    y = y if yfactor is None else float(y) * yfactor
 
     return x, y
 
@@ -198,7 +199,7 @@ def get_data(raw_data, ycol, xshift_local, yshift_local, prefilter, options):
         if not prefilter.match_line(line, sep):
             continue
         x, y = parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2,
-                          options.xfactor)
+                          options.xfactor, options.yfactor)
         if x is not None and y is not None:
             # append values
             xlist.append(fmt_convert(x, xfmt))

@@ -178,6 +178,7 @@ default_values = {
     'xscale': None,
     'yscale': None,
     'xfactor': None,
+    'yfactor': None,
     'use_mean': False,
     'use_median': False,
     'use_stddev': False,
@@ -403,6 +404,11 @@ def get_options(argv):
         dest='xfactor', default=default_values['xfactor'],
         metavar='XFACTOR',
         help='use XFACTOR factor for the x-axis',)
+    parser.add_argument(
+        '--yfactor', action='store', type=float,
+        dest='yfactor', default=default_values['yfactor'],
+        metavar='YFACTOR',
+        help='use YFACTOR factor for the y-axis',)
     parser.add_argument(
         '--yscale', action='store', type=str,
         dest='yscale', default=default_values['yscale'],
