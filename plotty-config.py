@@ -157,7 +157,7 @@ default_values = {
     'ycumulative': False,
     # use '' to separate using None (any number of spaces/tabs)
     'sep': ',',
-    'sep2': ',',
+    'sep2': ':',
     'legend_loc': 'best',
     # histogram information
     'histogram': False,
