@@ -93,7 +93,8 @@ VALID_HISTOGRAM_TYPES = ('raw', 'pdf', 'cdf')
 # parameter notes
 # There are 3 type of parameters
 # * 1. single: same value for every line (e.g. --xfmt, --ycol)
-# * 2. per-axis: need a different value per axis (e.g. --ylim)
+# * 2. per-axis: need a different value per axis (e.g. --ylim, --ylim2,
+#   --ylabel, --ylabel2)
 #   We use --twinx to create multiple axis
 # * 3. per-line: need a different value per line (e.g. --i, --fmt, --label,
 #   --prefilter))
@@ -119,6 +120,7 @@ VALID_HISTOGRAM_TYPES = ('raw', 'pdf', 'cdf')
 #   * infile [v]
 # * used in create_graph_begin()
 #   * ylabel [v]
+#   * ylabel2 [v]
 # * used in create_graph_draw()
 #   * xfmt [ ]
 #   * histogram [ ]
@@ -132,6 +134,7 @@ VALID_HISTOGRAM_TYPES = ('raw', 'pdf', 'cdf')
 #   * legend_loc [v]
 #   * xlim [ ]
 #   * ylim [v]
+#   * ylim2 [v]
 #   * xscale [ ]
 #   * yscale [ ]
 
@@ -167,9 +170,11 @@ default_values = {
     # histogram type
     'histogram_type': 'raw',
     'xlabel': '--xlabel',
-    'ylabel': [],
+    'ylabel': '--ylabel',
+    'ylabel2': '--ylabel2',
     'xlim': ['-', '-'],
-    'ylim': [],
+    'ylim': ['-', '-'],
+    'ylim2': ['-', '-'],
     'xscale': None,
     'yscale': None,
     'xfactor': None,
@@ -335,10 +340,15 @@ def get_options(argv):
         metavar='XLABEL',
         help='use XLABEL x label',)
     parser.add_argument(
-        '--ylabel', action='append',
+        '--ylabel', action='store',
         dest='ylabel', default=default_values['ylabel'],
         metavar='YLABEL',
         help='use YLABEL y label',)
+    parser.add_argument(
+        '--ylabel2', action='store',
+        dest='ylabel2', default=default_values['ylabel2'],
+        metavar='YLABEL2',
+        help='use YLABEL2 y label 2 (right axis)',)
     parser.add_argument(
         '--use-mean', action='store_const',
         dest='use_mean', const=True,
@@ -374,8 +384,12 @@ def get_options(argv):
         dest='xlim', default=default_values['xlim'],
         metavar=('left', 'right'),)
     parser.add_argument(
-        '--ylim', action='append', type=str, nargs=2,
+        '--ylim', action='store', type=str, nargs=2,
         dest='ylim', default=default_values['ylim'],
+        metavar=('bottom', 'top'),)
+    parser.add_argument(
+        '--ylim2', action='store', type=str, nargs=2,
+        dest='ylim2', default=default_values['ylim2'],
         metavar=('bottom', 'top'),)
     scale_values_str = [str(item) for item in SCALE_VALUES]
     parser.add_argument(

@@ -410,11 +410,10 @@ def create_graph_end(ax, ylabel, xlim, ylim, xscale, yscale):
     if xlim[1] != '-':
         ax.set_xlim(right=float(xlim[1]))
 
-    if ylim is not None:
-        if ylim[0] != '-':
-            ax.set_ylim(bottom=float(ylim[0]))
-        if ylim[1] != '-':
-            ax.set_ylim(top=float(ylim[1]))
+    if ylim[0] != '-':
+        ax.set_ylim(bottom=float(ylim[0]))
+    if ylim[1] != '-':
+        ax.set_ylim(top=float(ylim[1]))
 
     # set xscale/yscale
     if xscale is not None:
@@ -574,16 +573,18 @@ def main(argv):
         return xy_data
 
     # 2. get all the per-axes info
-    # create the axes
+    # create the main axis
     ax = []
+    axinfo = []
     ax.append(create_graph_begin(options))
+    ylabel = options.ylabel
+    ylim = options.ylim
+    axinfo.append([ylabel, ylim])
+    # create the twin axis
     if options.twinx > 0:
         ax.append(ax[0].twinx())
-
-    axinfo = []
-    for axid in range(len(ax)):
-        ylabel = options.ylabel[axid] if axid < len(options.ylabel) else None
-        ylim = options.ylim[axid] if axid < len(options.ylim) else None
+        ylabel = options.ylabel2
+        ylim = options.ylim2
         axinfo.append([ylabel, ylim])
 
     # 3. create the graph
