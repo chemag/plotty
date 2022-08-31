@@ -4,6 +4,7 @@
 """
 
 import argparse
+import copy
 import importlib
 import matplotlib
 import os
@@ -566,19 +567,42 @@ def get_options(argv):
     return gen_options, plot_line_list
 
 
+def plots_pb_fill(plots_pb):
+    for index, plot_pb in enumerate(plots_pb.plot):
+        if not plot_pb.HasField('import_id'):
+            continue
+        # plot_pb has import_id: check the import_id is valid
+        for ref_index in range(len(plots_pb.plot)):
+            if plot_pb.import_id == plots_pb.plot[ref_index].id:
+                break
+        else:
+            raise AssertionError(
+                f'error: unknown import_id {plot_pb.import_id}')
+
+        # inline modification of the plot_pb
+        tmp_plot_pb = copy.deepcopy(plots_pb.plot[ref_index])
+        tmp_plot_pb.MergeFrom(plot_pb)
+        # replace plots_pb.plot[index] with tmp_plot_pb
+        del plots_pb.plot[index]
+        plots_pb.plot.insert(index, tmp_plot_pb)
+
+
 def plots_pb_read(inplot, lineid):
     plot_line_list = []
     plots_list = []
     # read the inplots
     for inplot_file in inplot:
         plots_list.append([inplot_file, plotty_config_read(inplot_file)])
+    # add support for import_id
+    for _, plots_pb in plots_list:
+        plots_pb_fill(plots_pb)
     # make sure the lines exist
     for plot_line_id in lineid:
         plot_id, line_id = plot_line_id.split('/')
         # search for the line in plots_list
         line_found = False
-        for inplot_file, plots_config in plots_list:
-            for plot_pb in plots_config.plot:
+        for inplot_file, plots_pb in plots_list:
+            for plot_pb in plots_pb.plot:
                 plot_pb = plot_pb_add_defaults(plot_pb)
                 if plot_pb.id == plot_id:
                     # found plot_id

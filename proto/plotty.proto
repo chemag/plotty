@@ -57,7 +57,7 @@ message Line {
 
 message Plot {
   optional string id = 1;
-  //optional string import_id = 2;
+  optional string import_id = 2;
   optional string marker = 3;
   message FigSize {
     optional float width = 1;
