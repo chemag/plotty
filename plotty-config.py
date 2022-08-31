@@ -561,32 +561,37 @@ def get_options(argv):
 
     # config-based parameters
     if options.inplot and options.lineid:
-        # read the inplots
-        plots_list = []
-        for inplot_file in options.inplot:
-            plots_list.append([inplot_file, plotty_config_read(inplot_file)])
-        # make sure the lines exist
-        for plot_line_id in options.lineid:
-            plot_id, line_id = plot_line_id.split('/')
-            # search for the line in plots_list
-            line_found = False
-            for inplot_file, plots_config in plots_list:
-                for plot_pb in plots_config.plot:
-                    plot_pb = plot_pb_add_defaults(plot_pb)
-                    if plot_pb.id == plot_id:
-                        # found plot_id
-                        line_pb = get_line_pb(plot_pb, line_id)
-                        if line_pb is not None:
-                            print(f'found {plot_line_id} in plot '
-                                  f'{plot_pb.id} and line {line_pb.id} at '
-                                  f'{inplot_file}')
-                            plot_line_list.append([plot_pb, plot_line_id])
-                            line_found = True
-                            break
-            assert line_found, (f'cannot find {plot_line_id} in '
-                                f'{options.inplot}')
+        plot_line_list += plots_pb_read(options.inplot, options.lineid)
 
     return gen_options, plot_line_list
+
+
+def plots_pb_read(inplot, lineid):
+    plot_line_list = []
+    plots_list = []
+    # read the inplots
+    for inplot_file in inplot:
+        plots_list.append([inplot_file, plotty_config_read(inplot_file)])
+    # make sure the lines exist
+    for plot_line_id in lineid:
+        plot_id, line_id = plot_line_id.split('/')
+        # search for the line in plots_list
+        line_found = False
+        for inplot_file, plots_config in plots_list:
+            for plot_pb in plots_config.plot:
+                plot_pb = plot_pb_add_defaults(plot_pb)
+                if plot_pb.id == plot_id:
+                    # found plot_id
+                    line_pb = get_line_pb(plot_pb, line_id)
+                    if line_pb is not None:
+                        print(f'found {plot_line_id} in plot '
+                              f'{plot_pb.id} and line {line_pb.id} at '
+                              f'{inplot_file}')
+                        plot_line_list.append([plot_pb, plot_line_id])
+                        line_found = True
+                        break
+        assert line_found, (f'cannot find {plot_line_id} in {inplot}')
+    return plot_line_list
 
 
 def build_positional_parameter(argv, parid):
