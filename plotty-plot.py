@@ -23,7 +23,7 @@ prefilter_lib = importlib.import_module('prefilter')
 utils = importlib.import_module('utils')
 
 
-__version__ = '0.2'
+__version__ = '0.3'
 
 
 def remove_outliers(xlist, sigma):
