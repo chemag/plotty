@@ -15,95 +15,15 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as md
 import numpy as np
 import os
-import scipy.optimize
 import sys
 
 config_lib = importlib.import_module('plotty-config')
 prefilter_lib = importlib.import_module('prefilter')
+postfilter_lib = importlib.import_module('postfilter')
 utils = importlib.import_module('utils')
 
 
 __version__ = '0.3'
-
-
-def remove_outliers(xlist, sigma):
-    # remove values way over the average
-    total_x = sum(xlist)
-    mean_x = total_x / len(xlist)
-    stddev_x = math.sqrt(sum((i - mean_x) ** 2 for i in xlist) /
-                         (len(xlist) - 1))
-    min_value = mean_x - (stddev_x * sigma)
-    max_value = mean_x + (stddev_x * sigma)
-    in_xlist = [i for i in xlist if i > min_value and i < max_value]
-    out_xlist = [i for i in xlist if i < min_value or i > max_value]
-    return in_xlist, out_xlist, [min_value, max_value]
-
-
-def get_histogram(xlist, histogram_pb, debug):
-    nbins = histogram_pb.bins
-    nozeroes = histogram_pb.nozeroes
-    sigma = histogram_pb.sigma
-    htype = config_lib.get_histogram_type(histogram_pb)
-
-    if sigma is not None and sigma:
-        in_xlist, out_xlist, in_range = remove_outliers(xlist, sigma)
-        if (len(xlist) - len(in_xlist)) / len(xlist) > 0.1:
-            dropped_pct = 100. * (len(xlist) - len(in_xlist)) / len(xlist)
-            print('Ignoring sigma removal of outliers (at sigma: %f would be '
-                  'dropping %f%% of the values' % (
-                      sigma, dropped_pct))
-        else:
-            if debug > 0:
-                print('Removing %i of %i values sigma: %f range: [%f, %f]' % (
-                    len(xlist) - len(in_xlist),
-                    len(xlist), sigma,
-                    in_range[0], in_range[1]))
-            xlist = in_xlist
-    # remove nan values
-    xlist = [x for x in xlist if x is not np.nan]
-    # get the extreme points
-    minx = min(xlist)
-    maxx = max(xlist)
-    # do not bin more than needed
-    nbins = min(nbins, len(xlist))
-    bin_size = (maxx - minx) / nbins
-    border_values = [minx + (i + 1) * bin_size for i in range(nbins - 1)]
-    bin_list = [minx, ] + border_values + [maxx, ]
-    real_xlist = [(r + l) / 2.0 for (l, r) in zip(bin_list[:-1], bin_list[1:])]
-
-    # get the number of values in the histogram
-    ylist = [0] * nbins
-    for x in xlist:
-        i = 0
-        for border_value in border_values:
-            if x < border_value:
-                ylist[i] += 1
-                break
-            i += 1
-        else:
-            ylist[-1] += 1
-
-    # support for raw, pdf (ratio), and cdf histograms
-    if htype == 'raw':
-        pass
-    elif htype == 'pdf':
-        ylist = [(1.0 * y) / sum(ylist) for y in ylist]
-    elif htype == 'cdf':
-        # start with the pdf
-        ylist = [(1.0 * y) / sum(ylist) for y in ylist]
-        # add the pdf up
-        new_ylist = []
-        accum = 0.0
-        for y in ylist:
-            accum += y
-            new_ylist.append(accum)
-        ylist = new_ylist
-
-    if nozeroes:
-        real_xlist, ylist = zip(*[(x, y) for x, y in zip(real_xlist, ylist)
-                                if y != 0])
-
-    return real_xlist, ylist
 
 
 def read_file(infile):
@@ -216,76 +136,12 @@ def get_data_raw_data(raw_data, plot_pb, line_pb, gen_options):
     postfilter_list = config_lib.get_parameter(plot_pb, line_pb, 'postfilter')
     for postfilter_pb in postfilter_list.postfilter:
         postfilter_type = config_lib.get_postfilter_type(postfilter_pb)
-        # 5.1. support for shift modes
-        if postfilter_type == 'xshift':
-            xshift = postfilter_pb.parameter
-            xlist = [(x + xshift) for x in xlist]
-        elif postfilter_type == 'yshift':
-            yshift = postfilter_pb.parameter
-            ylist = [(y + yshift) for y in ylist]
-        # 5.2. support for factor modes
-        elif postfilter_type == 'xfactor':
-            xfactor = postfilter_pb.parameter
-            xlist = [(x * float(xfactor)) for x in xlist]
-        elif postfilter_type == 'yfactor':
-            yfactor = postfilter_pb.parameter
-            ylist = [(y * float(yfactor)) for y in ylist]
-        # 5.3. support for ydelta (plotting `y[k] - y[k-1]` instead of `y[k]`)
-        elif postfilter_type == 'ydelta':
-            ylist = [y1 - y0 for y0, y1 in zip([ylist[0]] + ylist[:-1], ylist)]
-        # 5.4. support for ycumulative (plotting `\Sum y[k]` instead of `y[k]`)
-        elif postfilter_type == 'ycumulative':
-            new_ylist = []
-            for y in ylist:
-                prev_y = new_ylist[-1] if new_ylist else 0
-                new_ylist.append(y + prev_y)
-            ylist = new_ylist
-        # 5.5. support for replacements
-        elif postfilter_type == 'mean':
-            mean = np.mean(ylist)
-            ylist = [mean for _ in ylist]
-        elif postfilter_type == 'median':
-            median = np.median(ylist)
-            ylist = [median for _ in ylist]
-        elif postfilter_type == 'stddev':
-            stddev = np.std(ylist)
-            ylist = [stddev for _ in ylist]
-        elif postfilter_type == 'regression':
-            # curve fit (linear regression)
-            (a, b), _ = scipy.optimize.curve_fit(fit_function, xlist, ylist)
-            ylist = [fit_function(x, a, b) for x in xlist]
-        elif postfilter_type == 'moving_average':
-            # Moving Average fit (linear regression)
-            length = int(postfilter_pb.parameter)
-            ylist = get_moving_average(ylist, length)
-        elif postfilter_type == 'ewma':
-            # Exponentially-Weighted Moving Average
-            alpha = postfilter_pb.parameter
-            ylist = get_ewma(ylist, alpha)
-        # 5.6. support for histograms
-        elif postfilter_type == 'hist':
-            xlist, ylist = get_histogram(xlist, postfilter_pb.histogram,
-                                         gen_options.debug)
+        postfilter = postfilter_lib.Postfilter(postfilter_type,
+                                               postfilter_pb.parameter,
+                                               postfilter_pb.histogram,
+                                               gen_options.debug)
+        xlist, ylist = postfilter.run(xlist, ylist)
     return xlist, ylist
-
-
-def get_moving_average(ylist, length):
-    new_ylist = []
-    for i in range(len(ylist)):
-        max_index = min(i, len(ylist) - 1)
-        min_index = max(0, i - length + 1)
-        used_values = ylist[min_index:max_index + 1]
-        new_val = sum(used_values) / len(used_values)
-        new_ylist.append(new_val)
-    return new_ylist
-
-
-def get_ewma(ylist, alpha):
-    new_ylist = [ylist[0]]
-    for y in ylist[1:]:
-        new_val = alpha * y + (1.0 - alpha) * new_ylist[-1]
-        new_ylist.append(new_val)
-    return new_ylist
 
 
 # convert axis format
@@ -383,11 +239,6 @@ def matplotlib_fmt_parse(fmt):
     if color is None:
         color = fmt
     return marker, linestyle, color
-
-
-# define a simple fitting function
-def fit_function(x, a, b):
-    return a * x + b
 
 
 def create_graph_draw(ax, xlist, ylist, line_pb, plot_pb, gen_options):
