@@ -514,7 +514,7 @@ def main(argv):
     # `label`, `fmt`, `color`, and `prefilter`
     xy_data = []
     for plot_pb, plot_line_id in plot_line_list:
-        _, line_id = plot_line_id.split('/')
+        _, line_id = plot_line_id.split('/', maxsplit=1)
         line_pb = config_lib.get_line_pb(plot_pb, line_id)
         # fix infile name
         if line_pb.infile == '-':

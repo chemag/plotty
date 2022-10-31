@@ -75,7 +75,8 @@ class Prefilter:
             else:
                 # look for named columns
                 assert fcol in column_names, (
-                    'error: invalid fcol name: "%s"' % fcol)
+                    f'error: invalid fcol name: "{fcol}" '
+                    f'(column_names: {column_names})')
                 fcol = column_names.index(fcol)
             new_item_list.append([fcol, fop, fval])
         self.item_list = new_item_list
