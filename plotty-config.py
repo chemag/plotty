@@ -18,6 +18,7 @@ sys.path.append(SCRIPT_ROOT_DIR)
 import proto.plotty_pb2  # noqa: E402
 
 prefilter_lib = importlib.import_module('prefilter')
+postfilter_lib = importlib.import_module('postfilter')
 
 
 SCALE_VALUES = (None, 'linear', 'log', 'symlog', 'logit')
@@ -203,6 +204,7 @@ default_values = {
     'yshift': [],
     'label': [],
     'prefilter': [],
+    'postfilter': [],
     'fmt': [],
     'color': [],
     'infile': [],
@@ -475,6 +477,11 @@ def get_options(argv):
         metavar='PREFILTER-SPEC',
         help='select only rows where PREFILTER-SPEC is true',)
     parser.add_argument(
+        '--postfilter', action='append',
+        dest='postfilter', default=default_values['postfilter'],
+        metavar='POSTFILTER-SPEC',
+        help='process rows according to POSTFILTER-SPEC',)
+    parser.add_argument(
         '-i', '--infile', action='append',
         default=default_values['infile'],
         metavar='input-file',
@@ -531,13 +538,16 @@ def get_options(argv):
     if options.version:
         return options
 
-    # check the filters
+    # parse the filters to check they are ok
     if options.prefilter is not None:
         for prefilter in options.prefilter:
             prefilter_lib.Prefilter(prefilter)
     if options.batch_prefilter is not None:
         for prefilter in options.batch_prefilter:
             prefilter_lib.Prefilter(prefilter)
+    if options.postfilter is not None:
+        for postfilter in options.postfilter:
+            postfilter_lib.Postfilter.constructor(postfilter)
     # check there is (at least) an input or inplot file
     assert options.infile or options.batch_infile or (
         options.inplot and options.lineid), (
@@ -864,6 +874,16 @@ def convert_namespace_to_config(options, gen_options=None):
             line_pb.ycol2 = options.ycol2[i]
         # twinx
         line_pb.twinx = (options.twinx > 0 and index >= options.twinx)
+        # postfilter
+        #if index < len(options.postfilter):
+        #    _type, parameter = options.postfilter[index].split()
+        #    postfilter_pb = proto.plotty_pb2.Postfilter()
+        #    assert _type in proto.plotty_pb2.Postfilter.Type.keys(), (
+        #        f'error: invalid postfilter type: {_type}. Valid values'
+        #        f'are {proto.plotty_pb2.Postfilter.Type.keys()}')
+        #    postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.Value(_type)
+        #    postfilter_pb.parameter = float(parameter)
+        #    line_pb.postfilter.append(postfilter_pb)
         # postfilter.xshift
         if index < len(options.xshift):
             xshift = float(options.xshift[index])
@@ -895,6 +915,17 @@ def convert_namespace_to_postfilters(options):
         postfilter_pb.histogram.CopyFrom(
             convert_namespace_to_histogram(options))
         postfilter_list.append(postfilter_pb)
+    # process generic values
+    if options.postfilter:
+        for postfilter in options.postfilter:
+            _type, parameter = postfilter.split()
+            postfilter_pb = proto.plotty_pb2.Postfilter()
+            assert _type in proto.plotty_pb2.Postfilter.Type.keys(), (
+                f'error: invalid postfilter type: {_type}. Valid values'
+                f'are {proto.plotty_pb2.Postfilter.Type.keys()}')
+            postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.Value(_type)
+            postfilter_pb.parameter = float(parameter)
+            postfilter_list.append(postfilter_pb)
     # process simpler values
     # TODO(chema): process xshift, yshift
     if options.xfactor:
