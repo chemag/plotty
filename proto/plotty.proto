@@ -15,6 +15,7 @@ message Postfilter {
     regression = 10;
     moving_average = 11;
     ewma = 12;
+    xsort = 13;
   }
   optional Type type = 1;
   optional Histogram histogram = 2;

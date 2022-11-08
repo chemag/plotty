@@ -127,6 +127,7 @@ DEFAULT_FMT_LIST = ['C%i%s' % (i % 10, '.') for i in
 #   * ycumulative [ ]
 #   * xshift [v]
 #   * yshift [v]
+#   * xsort [v]
 #   * label [v]
 #   * fmt [v]
 #   * color [v]
@@ -195,6 +196,7 @@ default_values = {
     'use_regression': False,
     'use_moving_average': None,
     'use_ewma': None,
+    'xsort': False,
     # per-line parameters
     'xcol': [],
     'xcol2': [],
@@ -425,6 +427,12 @@ def get_options(argv):
         '--twinx', action='count',
         dest='twinx', default=0,
         help='use twin y axes',)
+    parser.add_argument(
+        '--xsort', action='store_const',
+        const=True,
+        dest='xsort', default=default_values['xsort'],
+        metavar='XSORT',
+        help='sort data based on x-axis',)
     # per-line arguments
     parser.add_argument(
         '--xcol', action='append',
@@ -898,6 +906,12 @@ def convert_namespace_to_config(options, gen_options=None):
             postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.yshift
             postfilter_pb.parameter = yshift
             line_pb.postfilter.append(postfilter_pb)
+        # postfilter.xsort
+        if options.xsort:
+            postfilter_pb = proto.plotty_pb2.Postfilter()
+            postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.xsort
+            postfilter_pb.parameter = 1.0
+            line_pb.postfilter.append(postfilter_pb)
 
     plot_line_list = []
     plot_id = 'cli'
@@ -973,6 +987,11 @@ def convert_namespace_to_postfilters(options):
         postfilter_pb = proto.plotty_pb2.Postfilter()
         postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.ewma
         postfilter_pb.parameter = options.use_ewma
+        postfilter_list.append(postfilter_pb)
+    if options.xsort:
+        postfilter_pb = proto.plotty_pb2.Postfilter()
+        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.xsort
+        postfilter_pb.parameter = options.xsort
         postfilter_list.append(postfilter_pb)
     return postfilter_list
 
