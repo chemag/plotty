@@ -9,10 +9,10 @@
 import sys
 import importlib
 
-plotty_plot = importlib.import_module('plotty-plot')
+plotty_plot = importlib.import_module("plotty-plot")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # add "--histogram" option
-    sys.argv.append('--histogram')
+    sys.argv.append("--histogram")
     # at least the CLI program name: (CLI) execution
     plotty_plot.main(sys.argv)

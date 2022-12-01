@@ -17,20 +17,20 @@ import numpy as np
 import os
 import sys
 
-config_lib = importlib.import_module('plotty-config')
-prefilter_lib = importlib.import_module('prefilter')
-postfilter_lib = importlib.import_module('postfilter')
-utils = importlib.import_module('utils')
+config_lib = importlib.import_module("plotty-config")
+prefilter_lib = importlib.import_module("prefilter")
+postfilter_lib = importlib.import_module("postfilter")
+utils = importlib.import_module("utils")
 
 
-__version__ = '0.3'
+__version__ = "0.3"
 
 
 def read_file(infile):
     # open infile
-    if infile == '-':
-        infile = '/dev/fd/0'
-    with open(infile, 'r') as fin:
+    if infile == "-":
+        infile = "/dev/fd/0"
+    with open(infile, "r") as fin:
         # read data
         raw_data = fin.read()
     return raw_data
@@ -38,18 +38,18 @@ def read_file(infile):
 
 def parse_csv(raw_data, sep, header):
     # split the input in lines
-    lines = raw_data.split('\n')
+    lines = raw_data.split("\n")
     # look for named columns in line 0
     column_names = []
-    if lines[0].strip().startswith('#') or header:
+    if lines[0].strip().startswith("#") or header:
         column_names = lines[0].strip().split(sep)
-        if column_names[0].startswith('#'):
+        if column_names[0].startswith("#"):
             column_names[0] = column_names[0][1:]
         # remove extra spaces
         column_names = [colname.strip() for colname in column_names]
         lines = lines[1:]
     # remove comment lines
-    lines = [line for line in lines if not line.strip().startswith('#')]
+    lines = [line for line in lines if not line.strip().startswith("#")]
     return column_names, lines
 
 
@@ -89,34 +89,34 @@ def parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2):
 
 def get_data(plot_pb, line_pb, gen_options):
     # read the input file
-    infile = config_lib.get_parameter(plot_pb, line_pb, 'infile')
+    infile = config_lib.get_parameter(plot_pb, line_pb, "infile")
     raw_data = read_file(infile)
     return get_data_raw_data(raw_data, plot_pb, line_pb, gen_options)
 
 
 def get_data_raw_data(raw_data, plot_pb, line_pb, gen_options):
     # 1. convert the raw data into lines
-    sep = config_lib.get_parameter(plot_pb, line_pb, 'sep')
-    header = config_lib.get_parameter(plot_pb, line_pb, 'header')
+    sep = config_lib.get_parameter(plot_pb, line_pb, "sep")
+    header = config_lib.get_parameter(plot_pb, line_pb, "header")
     column_names, lines = parse_csv(raw_data, sep, header)
 
     # 2. fix column names in the prefilter
-    prefilter_str = config_lib.get_parameter(plot_pb, line_pb, 'prefilter')
+    prefilter_str = config_lib.get_parameter(plot_pb, line_pb, "prefilter")
     prefilter = prefilter_lib.Prefilter(prefilter_str)
     prefilter.fix_columns(column_names)
 
     # 3. get column ids
-    xcol = config_lib.get_parameter(plot_pb, line_pb, 'xcol')
-    ycol = config_lib.get_parameter(plot_pb, line_pb, 'ycol')
+    xcol = config_lib.get_parameter(plot_pb, line_pb, "xcol")
+    ycol = config_lib.get_parameter(plot_pb, line_pb, "ycol")
     xcol, ycol = get_column_ids(xcol, ycol, column_names)
 
     # 4. parse all the lines into (xlist, ylist)
-    sep2 = config_lib.get_parameter(plot_pb, line_pb, 'sep2')
-    sep2 = sep2 if sep2 != '' else None
-    xcol2 = config_lib.get_parameter(plot_pb, line_pb, 'xcol2')
-    ycol2 = config_lib.get_parameter(plot_pb, line_pb, 'ycol2')
-    xfmt = config_lib.get_parameter(plot_pb, line_pb, 'xfmt')
-    yfmt = config_lib.get_parameter(plot_pb, line_pb, 'yfmt')
+    sep2 = config_lib.get_parameter(plot_pb, line_pb, "sep2")
+    sep2 = sep2 if sep2 != "" else None
+    xcol2 = config_lib.get_parameter(plot_pb, line_pb, "xcol2")
+    ycol2 = config_lib.get_parameter(plot_pb, line_pb, "ycol2")
+    xfmt = config_lib.get_parameter(plot_pb, line_pb, "xfmt")
+    yfmt = config_lib.get_parameter(plot_pb, line_pb, "yfmt")
     xlist = []
     ylist = []
     for i, line in enumerate(lines):
@@ -133,29 +133,31 @@ def get_data_raw_data(raw_data, plot_pb, line_pb, gen_options):
             ylist.append(fmt_convert(y, yfmt))
 
     # 5. postfilter values
-    postfilter_list = config_lib.get_parameter(plot_pb, line_pb, 'postfilter')
+    postfilter_list = config_lib.get_parameter(plot_pb, line_pb, "postfilter")
     for postfilter_pb in postfilter_list.postfilter:
         postfilter_type = config_lib.get_postfilter_type(postfilter_pb)
-        postfilter = postfilter_lib.Postfilter(postfilter_type,
-                                               postfilter_pb.parameter,
-                                               postfilter_pb.histogram,
-                                               gen_options.debug)
+        postfilter = postfilter_lib.Postfilter(
+            postfilter_type,
+            postfilter_pb.parameter,
+            postfilter_pb.histogram,
+            gen_options.debug,
+        )
         xlist, ylist = postfilter.run(xlist, ylist)
     return xlist, ylist
 
 
 # convert axis format
 def fmt_convert(item, fmt):
-    if fmt == 'int':
+    if fmt == "int":
         return int(float(item))
-    elif fmt == 'float':
+    elif fmt == "float":
         if item is None:
             return np.nan
         return float(item)
-    elif fmt == 'unix':
+    elif fmt == "unix":
         # convert unix timestamp to matplotlib datenum
         return md.date2num(datetime.datetime.fromtimestamp(float(item)))
-    raise Exception('Error: invalid fmt (%s)' % fmt)
+    raise Exception("Error: invalid fmt (%s)" % fmt)
 
 
 def get_column_ids(xcol, ycol, column_names):
@@ -192,7 +194,7 @@ def create_graph_begin(plot_pb):
     ax1.set_title(plot_pb.title)
     ax1.set_xlabel(plot_pb.xlabel)
     xfmt = config_lib.get_column_fmt_type(plot_pb.xfmt)
-    if xfmt == 'unix':
+    if xfmt == "unix":
         xfmt = md.DateFormatter(plot_pb.fmtdate)
         ax1.xaxis.set_major_formatter(xfmt)
     return ax1
@@ -215,7 +217,7 @@ def matplotlib_fmt_parse(fmt):
         color = fmt[0]
         fmt = fmt[1:]
     # predefined colors (e.g. 'C0')
-    if len(fmt) >= 2 and fmt[0] == 'C' and fmt[1].isdigit():
+    if len(fmt) >= 2 and fmt[0] == "C" and fmt[1].isdigit():
         color = fmt[:2]
         fmt = fmt[2:]
 
@@ -230,7 +232,7 @@ def matplotlib_fmt_parse(fmt):
     for ls in config_lib.VALID_MATPLOTLIB_LINESTYLES.keys():
         if fmt.startswith(ls):
             linestyle = config_lib.VALID_MATPLOTLIB_LINESTYLES[ls]
-            fmt = fmt[len(ls):]
+            fmt = fmt[len(ls) :]
             break
     else:
         linestyle = None
@@ -244,36 +246,46 @@ def matplotlib_fmt_parse(fmt):
 def create_graph_draw(ax, xlist, ylist, line_pb, plot_pb, gen_options):
     marker, linestyle, color = matplotlib_fmt_parse(line_pb.fmt)
 
-    ax.plot(xlist, ylist, color=color,
-            linestyle=linestyle, marker=marker,
-            label=line_pb.label)
+    ax.plot(
+        xlist,
+        ylist,
+        color=color,
+        linestyle=linestyle,
+        marker=marker,
+        label=line_pb.label,
+    )
 
     if gen_options.debug > 1:
-        print(f'ax.plot(xlist: {xlist} ylist: {ylist} label: {line_pb.label}')
+        print(f"ax.plot(xlist: {xlist} ylist: {ylist} label: {line_pb.label}")
 
-    if plot_pb.xfmt == 'int':
+    if plot_pb.xfmt == "int":
         # make sure the ticks are all integers
         num_values = len(ax.get_xticks())
-        step = int(math.ceil((int(math.ceil(ax.get_xticks()[-1])) -
-                              int(math.floor(ax.get_xticks()[0]))) /
-                             num_values))
-        ax.set_xticks(range(int(ax.get_xticks()[0]),
-                            int(ax.get_xticks()[-1]),
-                            step))
+        step = int(
+            math.ceil(
+                (
+                    int(math.ceil(ax.get_xticks()[-1]))
+                    - int(math.floor(ax.get_xticks()[0]))
+                )
+                / num_values
+            )
+        )
+        ax.set_xticks(range(int(ax.get_xticks()[0]), int(ax.get_xticks()[-1]), step))
 
 
 def create_graph_end(ax, ylabel, ylim, plot_pb):
     ax.set_ylabel(ylabel)
 
+    # plt.axvline(x=90, color='k', linestyle=':', label='VMAF=90 (4, 6, 7, 10 Mbps)')
     # set xlim/ylim
-    if plot_pb.HasField('xlim') and plot_pb.xlim.min != '-':
+    if plot_pb.HasField("xlim") and plot_pb.xlim.min != "-":
         ax.set_xlim(left=float(plot_pb.xlim.min))
-    if plot_pb.HasField('xlim') and plot_pb.xlim.max != '-':
+    if plot_pb.HasField("xlim") and plot_pb.xlim.max != "-":
         ax.set_xlim(right=float(plot_pb.xlim.max))
 
-    if plot_pb.HasField('ylim') and ylim[0] != '-':
+    if plot_pb.HasField("ylim") and ylim[0] != "-":
         ax.set_ylim(bottom=float(ylim[0]))
-    if plot_pb.HasField('ylim') and ylim[1] != '-':
+    if plot_pb.HasField("ylim") and ylim[1] != "-":
         ax.set_ylim(top=float(ylim[1]))
 
     # set xscale/yscale
@@ -304,7 +316,7 @@ def batch_parse_line(line, sep, xcol):
 
 
 def batch_process_data(raw_data, sep, col, f, header):
-    sep = sep if sep != '' else None
+    sep = sep if sep != "" else None
 
     # convert the raw data into lines
     column_names, lines = parse_csv(raw_data, sep, header)
@@ -337,7 +349,7 @@ def main(argv):
     # parse options
     gen_options, plot_line_list = config_lib.get_options(argv)
     if gen_options.version:
-        print('version: %s' % __version__)
+        print("version: %s" % __version__)
         sys.exit(0)
 
     # 1. get all the per-line info into xy_data
@@ -352,24 +364,24 @@ def main(argv):
     #        options.batch_label_col, options.batch_prefilter)
     # else:
 
-    if gen_options.outfile == '-':
-        gen_options.outfile = '/dev/fd/1'
+    if gen_options.outfile == "-":
+        gen_options.outfile = "/dev/fd/1"
 
     if gen_options.debug > 0:
-        print(f'gen_options: {gen_options}')
+        print(f"gen_options: {gen_options}")
         if gen_options.debug > 1:
-            print(f'plot_line_list: {plot_line_list}')
+            print(f"plot_line_list: {plot_line_list}")
 
     # 1.2. get all the per-line info into xy_data
     # Includes `ycol`, `xlist` (x-axis values), `ylist` (y-axis values),
     # `label`, `fmt`, `color`, and `prefilter`
     xy_data = []
     for plot_pb, plot_line_id in plot_line_list:
-        _, line_id = plot_line_id.split('/', maxsplit=1)
+        _, line_id = plot_line_id.split("/", maxsplit=1)
         line_pb = config_lib.get_line_pb(plot_pb, line_id)
         # fix infile name
-        if line_pb.infile == '-':
-            line_pb.infile = '/dev/fd/0'
+        if line_pb.infile == "-":
+            line_pb.infile = "/dev/fd/0"
         # get all the info from the current line
         xlist, ylist = get_data(plot_pb, line_pb, gen_options)
         xy_data.append([xlist, ylist, line_pb])
@@ -398,8 +410,7 @@ def main(argv):
     axid = 0
     for (xlist, ylist, line_pb) in xy_data:
         axid = 1 if line_pb.twinx else 0
-        create_graph_draw(ax[axid], xlist, ylist, line_pb, plot_pb,
-                          gen_options)
+        create_graph_draw(ax[axid], xlist, ylist, line_pb, plot_pb, gen_options)
 
     # set final graph details
     for axid, (ylabel, ylim) in enumerate(axinfo):
@@ -407,7 +418,7 @@ def main(argv):
         create_graph_end(ax[axid], ylabel, ylim, plot_pb)
 
     # set common legend
-    if plot_pb.HasField('legend_loc') and plot_pb.legend_loc != 'none':
+    if plot_pb.HasField("legend_loc") and plot_pb.legend_loc != "none":
         # https://stackoverflow.com/a/14344146
         lin_list = []
         leg_list = []
@@ -419,10 +430,10 @@ def main(argv):
 
     # save graph
     if gen_options.debug > 0:
-        print('output is %s' % gen_options.outfile)
-    plt.savefig('%s' % gen_options.outfile)
+        print("output is %s" % gen_options.outfile)
+    plt.savefig("%s" % gen_options.outfile)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # at least the CLI program name: (CLI) execution
     main(sys.argv)

@@ -6,14 +6,14 @@
 
 import importlib
 
-utils = importlib.import_module('utils')
+utils = importlib.import_module("utils")
 
 
 # prefilter processing
 class Prefilter:
     # prefilter ops
-    VALID_FILTER_OPS = 'eq', 'ne', 'gt', 'ge', 'lt', 'le'
-    VALID_BOOL_OPS = 'and', 'or'
+    VALID_FILTER_OPS = "eq", "ne", "gt", "ge", "lt", "le"
+    VALID_BOOL_OPS = "and", "or"
 
     def __init__(self, string):
         self.item_list = []
@@ -42,7 +42,7 @@ class Prefilter:
             return
         # break the prefilter in group of 3x items
         assert len(f) % 4 == 3, f'incorrect num of elements in "{self.string}"'
-        item = f[0:0+3]
+        item = f[0 : 0 + 3]
         self.assert_item(*item)
         self.item_list.append(item)
         i = 3
@@ -50,7 +50,7 @@ class Prefilter:
             bop = f[i]
             self.assert_bool(bop)
             self.bool_list.append(bop)
-            item = f[i+1:i+4]
+            item = f[i + 1 : i + 4]
             self.assert_item(*item)
             self.item_list.append(item)
             i += 4
@@ -58,12 +58,14 @@ class Prefilter:
     def assert_bool(self, bop):
         assert bop in self.VALID_BOOL_OPS, (
             f'invalid bool operation ("{bop}") in prefilter. '
-            f'Options: {self.VALID_BOOL_OPS}')
+            f"Options: {self.VALID_BOOL_OPS}"
+        )
 
     def assert_item(self, fcol, fop, fval):
         assert fop in self.VALID_FILTER_OPS, (
             f'invalid prefilter op ("{fop}") in "{fcol} {fop} {fval}". '
-            f'Options: {self.VALID_FILTER_OPS}')
+            f"Options: {self.VALID_FILTER_OPS}"
+        )
 
     def fix_columns(self, column_names):
         if self.string is None:
@@ -76,7 +78,8 @@ class Prefilter:
                 # look for named columns
                 assert fcol in column_names, (
                     f'error: invalid fcol name: "{fcol}" '
-                    f'(column_names: {column_names})')
+                    f"(column_names: {column_names})"
+                )
                 fcol = column_names.index(fcol)
             new_item_list.append([fcol, fop, fval])
         self.item_list = new_item_list
@@ -85,19 +88,20 @@ class Prefilter:
         fcol, fop, fval = item
         lval = val_list[fcol]
         # implement eq and ne
-        if fop in ('eq', 'ne'):
-            if ((fop == 'eq' and lval != fval) or
-                    (fop == 'ne' and lval == fval)):
+        if fop in ("eq", "ne"):
+            if (fop == "eq" and lval != fval) or (fop == "ne" and lval == fval):
                 return False
         # implement gt, ge, lt, le
-        elif fop in ('gt', 'ge', 'lt', 'le'):
+        elif fop in ("gt", "ge", "lt", "le"):
             # make sure line val and prefilter val are numbers
             lval = float(lval)
             fval = float(fval)
-            if ((fop == 'ge' and lval < fval) or
-                    (fop == 'gt' and lval <= fval) or
-                    (fop == 'le' and lval > fval) or
-                    (fop == 'lt' and lval >= fval)):
+            if (
+                (fop == "ge" and lval < fval)
+                or (fop == "gt" and lval <= fval)
+                or (fop == "le" and lval > fval)
+                or (fop == "lt" and lval >= fval)
+            ):
                 return False
         return True
 
@@ -106,13 +110,12 @@ class Prefilter:
             return True
         val_list = line.split(sep)
         # run all the items
-        item_vals = [self.match_item(item, val_list) for item in
-                     self.item_list]
+        item_vals = [self.match_item(item, val_list) for item in self.item_list]
         # coalesce them using the boolean ops
         i = 0
         ret = item_vals[i]
         for bop in self.bool_list:
-            bool_op = bool.__and__ if bop == 'and' else bool.__or__
+            bool_op = bool.__and__ if bop == "and" else bool.__or__
             i += 1
             ret = bool_op(ret, item_vals[i])
         return ret
