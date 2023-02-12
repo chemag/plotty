@@ -277,6 +277,7 @@ def create_graph_end(ax, ylabel, ylim, plot_pb):
     ax.set_ylabel(ylabel)
 
     # plt.axvline(x=90, color='k', linestyle=':', label='VMAF=90 (4, 6, 7, 10 Mbps)')
+    # plt.axhline(y=0, color='k', linestyle=':')
     # set xlim/ylim
     if plot_pb.HasField("xlim") and plot_pb.xlim.min != "-":
         ax.set_xlim(left=float(plot_pb.xlim.min))
