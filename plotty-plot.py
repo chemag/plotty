@@ -246,14 +246,25 @@ def matplotlib_fmt_parse(fmt):
 def create_graph_draw(ax, xlist, ylist, line_pb, plot_pb, gen_options):
     marker, linestyle, color = matplotlib_fmt_parse(line_pb.fmt)
 
-    ax.plot(
-        xlist,
-        ylist,
-        color=color,
-        linestyle=linestyle,
-        marker=marker,
-        label=line_pb.label,
-    )
+    try:
+        ax.plot(
+            xlist,
+            ylist,
+            color=color,
+            linestyle=linestyle,
+            marker=marker,
+            label=line_pb.label,
+        )
+    except ValueError as vex:
+        print(f"error: {vex}")
+        print("  ax_plot(")
+        print(f"    xlist ({len(xlist)} elements),")
+        print(f"    ylist ({len(ylist)} elements),")
+        print(f"    color={color},")
+        print(f"    linestyle={linestyle},")
+        print(f"    marker={marker},")
+        print(f"    label={line_pb.label},")
+        print(")")
 
     if gen_options.debug > 1:
         print(f"ax.plot(xlist: {xlist} ylist: {ylist} label: {line_pb.label}")
