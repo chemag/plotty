@@ -227,7 +227,12 @@ def plotty_config_read(infile):
     print(f"read plotty config: {infile}")
     plots_pb = proto.plotty_pb2.Plots()
     with open(infile, "rb") as fd:
-        text_format.Merge(fd.read(), plots_pb)
+        try:
+            pbtxt_contents = fd.read()
+            text_format.Merge(pbtxt_contents, plots_pb)
+        except text_format.ParseError:
+            print(f"error: invalid plotty pbtxt: \"{pbtxt_contents.decode('ascii')}\"")
+            raise
     return plots_pb
 
 
