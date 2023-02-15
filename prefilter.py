@@ -94,7 +94,12 @@ class Prefilter:
         # implement gt, ge, lt, le
         elif fop in ("gt", "ge", "lt", "le"):
             # make sure line val and prefilter val are numbers
-            lval = float(lval)
+            try:
+                lval = float(lval)
+            except ValueError:
+                # support for invalid comparisons in "False and <invalid>"
+                # and "True or <invalid>" cases
+                return "invalid"
             fval = float(fval)
             if (
                 (fop == "ge" and lval < fval)
@@ -104,6 +109,16 @@ class Prefilter:
             ):
                 return False
         return True
+
+    def run_bool_op(self, bool_op, val1, val2):
+        # support "invalid" cases
+        if bool_op == bool.__or__ and (val1 == True or val2 == True):
+            # True or <x> = True
+            return True
+        elif bool_op == bool.__and__ and (val1 == False or val2 == False):
+            # False and <x> = False
+            return False
+        return bool_op(val1, val2)
 
     def match_line(self, line, sep):
         if self.string is None:
@@ -117,5 +132,5 @@ class Prefilter:
         for bop in self.bool_list:
             bool_op = bool.__and__ if bop == "and" else bool.__or__
             i += 1
-            ret = bool_op(ret, item_vals[i])
+            ret = self.run_bool_op(bool_op, ret, item_vals[i])
         return ret

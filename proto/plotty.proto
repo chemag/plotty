@@ -42,7 +42,7 @@ message Histogram {
 message Line {
   optional string id = 1;
   optional string label = 2;
-  optional string prefilter = 3;
+  repeated string prefilter = 3;
   optional string fmt = 4;
   optional string infile = 5;
   optional bool header = 6;

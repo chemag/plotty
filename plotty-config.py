@@ -1304,7 +1304,9 @@ def get_parameter(plot_pb, line_pb, par):
         if plot_pb.default_line.__getattribute__(par):
             prefilter_list.append(plot_pb.default_line.__getattribute__(par))
         # prefilter just does AND
-        prefilter = " AND ".join(prefilter_list)
+        if not prefilter_list:
+            return ""
+        prefilter = " and ".join(prefilter_list[0])
         return prefilter
 
     if par == "postfilter":
