@@ -1082,7 +1082,7 @@ def convert_namespace_to_config(options, gen_options=None):
         line_id_list.append(line_pb.id)
         # prefilter
         if index < len(options.prefilter):
-            line_pb.prefilter = options.prefilter[index]
+            line_pb.prefilter.append(options.prefilter[index])
         # fmt
         if index < len(options.fmt):
             line_pb.fmt = options.fmt[index]
