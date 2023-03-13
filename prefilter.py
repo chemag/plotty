@@ -12,7 +12,7 @@ utils = importlib.import_module("utils")
 # prefilter processing
 class Prefilter:
     # prefilter ops
-    VALID_FILTER_OPS = "eq", "ne", "gt", "ge", "lt", "le"
+    VALID_FILTER_OPS = "eq", "ne", "gt", "ge", "lt", "le", "contains"
     VALID_BOOL_OPS = "and", "or"
 
     def __init__(self, string):
@@ -108,6 +108,12 @@ class Prefilter:
                 or (fop == "lt" and lval >= fval)
             ):
                 return False
+        # implement contains
+        elif fop in ("contains"):
+            # make sure line val and prefilter val are strings
+            lval = str(lval)
+            fval = str(fval)
+            return fval in lval
         return True
 
     def run_bool_op(self, bool_op, val1, val2):
