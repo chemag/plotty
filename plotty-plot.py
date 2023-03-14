@@ -151,7 +151,9 @@ def fmt_convert(item, fmt):
     if fmt == "int":
         return int(float(item))
     elif fmt == "float":
-        if item is None:
+        if not item:
+            return ""
+        elif item is None or item == "None":
             return np.nan
         return float(item)
     elif fmt == "unix":
