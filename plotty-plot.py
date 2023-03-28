@@ -188,10 +188,6 @@ def create_graph_begin(plot_pb):
     fig = plt.figure(figsize=(plot_pb.figsize.width, plot_pb.figsize.height))
     # plt.gca().set_xlim([xstart, xstart + 1100000000])
     # plt.gca().set_ylim([0, 100])
-    # # add a vertical line
-    # plt.axvline(x=game_start)
-    # # add a horizontal line
-    # plt.axhline(y=1)
     ax1 = fig.add_subplot(111)
     ax1.set_title(plot_pb.title)
     ax1.set_xlabel(plot_pb.xlabel)
@@ -289,7 +285,41 @@ def create_graph_draw(ax, xlist, ylist, line_pb, plot_pb, gen_options):
 def create_graph_end(ax, ylabel, ylim, plot_pb):
     ax.set_ylabel(ylabel)
 
+    # vertical lines
     # plt.axvline(x=90, color='k', linestyle=':', label='VMAF=90 (4, 6, 7, 10 Mbps)')
+    # 5MP
+    # plt.axvline(x=5.2, color='k', linestyle=':')
+    # plt.axvline(x=7.2, color='k', linestyle=':')
+    # plt.axvline(x=16, color='silver', linestyle=':')
+    # plt.axvline(x=19.5, color='silver', linestyle=':')
+    # plt.axvline(x=14, color='k', linestyle=':')
+    # plt.axvline(x=17.5, color='k', linestyle=':')
+    # 4MP
+    # plt.axvline(x=1, color='k', linestyle=':')
+    # plt.axvline(x=1.269, color='k', linestyle='-')
+    # plt.axvline(x=5, color='k', linestyle=':')
+    # plt.axvline(x=6.8, color='k', linestyle=':')
+    # plt.axvline(x=16, color='silver', linestyle=':')
+    # plt.axvline(x=18.5, color='silver', linestyle=':')
+    # plt.axvline(x=10.5, color='k', linestyle=':')
+    # plt.axvline(x=13, color='k', linestyle=':')
+    # plt.axvline(x=31, color='silver', linestyle=':')
+    # plt.axvline(x=35, color='silver', linestyle=':')
+    # no-EIS
+    # plt.axvline(x=15, color='k', linestyle=':')
+    # plt.axhline(y=89, color='k', linestyle=':')
+    # plt.axhline(y=75, color='k', linestyle=':')
+    # plt.axhline(y=88, color='k', linestyle=':')
+    # plt.axhline(y=67, color='k', linestyle=':')
+    # EIS
+    # plt.axvline(x=12, color='k', linestyle=':')
+    # plt.axhline(y=98, color='k', linestyle=':')
+    # plt.axhline(y=87, color='k', linestyle=':')
+    # plt.axvline(x=10, color='k', linestyle=':')
+    # plt.axhline(y=99, color='k', linestyle=':')
+    # plt.axhline(y=90, color='k', linestyle=':')
+    # horizontal lines
+    # plt.axhline(y=90, color='k', linestyle='-')
     # plt.axhline(y=0, color='k', linestyle=':')
     # set xlim/ylim
     if plot_pb.HasField("xlim") and plot_pb.xlim.min != "-":
