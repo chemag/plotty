@@ -1,0 +1,69 @@
+plot {
+    id: "simple"
+    xlabel: "x-axis label"
+    ylabel: "y-axis label"
+    title: "title here"
+    default_line {
+        xcol: "myxcol"
+        ycol: "myycol"
+        header: true
+    }
+    line {
+        id: "data"
+        infile: "data.csv"
+        fmt: "o-black"
+        label: "data line"
+    }
+    line {
+        id: "dot"
+        fmt: "+-black"
+        label: "simple dot"
+        data {
+            point { x: 50 y: 50 }
+        }
+    }
+    line {
+        id: "horizontal"
+        fmt: "o-red"
+        label: "horizontal line"
+        data {
+            point { x: 0 y: 100 }
+            point { x: 100 y: 100 }
+        }
+    }
+    line {
+        id: "vertical"
+        fmt: "o-green"
+        label: "vertical line"
+        data {
+            point { x: 0 y: 0 }
+            point { x: 0 y: 100 }
+        }
+    }
+    line {
+        id: "diagonal"
+        fmt: "o-blue"
+        label: "diagonal line"
+        data {
+            point { x: 0 y: 0 }
+            point { x: 100 y: 100 }
+        }
+    }
+    line {
+        id: "line"
+        fmt: "o-gray"
+        label: "data line"
+        data {
+            point { x: 10 y: 1 }
+            point { x: 20 y: 3 }
+            point { x: 30 y: 2 }
+            point { x: 40 y: 3 }
+            point { x: 50 y: 2 }
+            point { x: 60 y: 1 }
+            point { x: 70 y: 4 }
+            point { x: 80 y: 6 }
+            point { x: 90 y: 5 }
+            point { x: 100 y: 3 }
+        }
+    }
+}

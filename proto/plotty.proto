@@ -54,6 +54,14 @@ message Line {
   optional string sep = 13;
   optional string sep2 = 14;
   optional bool twinx = 15;
+  message Data {
+    message Point {
+      optional float x = 1;
+      optional float y = 2;
+    }
+    repeated Point point = 1;
+  }
+  optional Data data = 16;
 }
 
 message Plot {

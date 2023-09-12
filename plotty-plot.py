@@ -89,9 +89,24 @@ def parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2):
 
 def get_data(plot_pb, line_pb, gen_options):
     # read the input file
+    # read the input file
     infile = config_lib.get_parameter(plot_pb, line_pb, "infile")
+    if not infile:
+        if line_pb.HasField("data"):
+            return read_data(line_pb.data)
+        raise Exception("Error: no infile or data info")
     raw_data = read_file(infile)
     return get_data_raw_data(raw_data, plot_pb, line_pb, gen_options)
+
+
+def read_data(data):
+    # ensure the minimum values exist
+    xlist = []
+    ylist = []
+    for point in data.point:
+        xlist.append(point.x if point.HasField("x") else 0)
+        ylist.append(point.y if point.HasField("y") else 0)
+    return xlist, ylist
 
 
 def get_data_raw_data(raw_data, plot_pb, line_pb, gen_options):
