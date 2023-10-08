@@ -215,16 +215,29 @@ def create_graph_begin(plot_pb):
 
 def matplotlib_fmt_parse(fmt):
     # https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.plot.html
-    # A format string consists of a part for color, marker and line:
-    # fmt = '[marker][line][color]'
+    # A format string consists of a part for color, marker and linestyle:
+    # fmt = '[marker][linestyle][color]'
     # Each of them is optional. If not provided, the value from the style
-    # cycle is used. Exception: If line is given, but no marker, the data
+    # cycle is used. Exception: If linestyle is given, but no marker, the data
     # will be a line without markers.
-    # Other combinations such as [color][marker][line] are also supported,
+    # Other combinations such as [color][marker][linestyle] are also supported,
     # but note that their parsing may be ambiguous.
     marker, linestyle, color = None, None, None
 
-    # let's start with color in '[color][marker][line]'
+    # high-priority syntax: "<color>,<marker>,<linestyle>"
+    if fmt.count(",") > 1:
+        if fmt.count(",") == 2:
+            marker, linestyle, color = fmt.split(",")
+        elif fmt.count(",") == 3 and ",,," in fmt:
+            # "," is a valid character for the marker
+            marker = ","
+            linestyle, color = fmt.split(",,,")
+        else:
+            # invalid fmt
+            raise AssertionError(f"error: invalid fmt type: '{fmt}'")
+        return marker, linestyle, color
+
+    # let's start with color in '[color][marker][linestyle]'
     # single letter (e.g. 'b'),
     if len(fmt) >= 1 and fmt[0] in config_lib.VALID_MATPLOTLIB_COLORS:
         color = fmt[0]
