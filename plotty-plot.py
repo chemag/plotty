@@ -166,7 +166,7 @@ def fmt_convert(item, fmt):
     if fmt == "int":
         return int(float(item))
     elif fmt == "float":
-        if not item:
+        if item == "":
             return ""
         elif item is None or item == "None":
             return np.nan
