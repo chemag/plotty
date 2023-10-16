@@ -201,11 +201,16 @@ class Postfilter:
         # 6. support for histograms
         elif self.type == "hist":
             xlist, ylist = get_histogram(xlist, self.histogram, self.debug)
-        # 7. support for shift modes
+        # 7. support for sort modes
         elif self.type == "xsort":
             # do deco sorting based on the first element (x)
             deco_list = list(zip(xlist, ylist))
             deco_list.sort()
             xlist, ylist = zip(*deco_list)
+        elif self.type == "ysort":
+            # do deco sorting based on the second element (y)
+            deco_list = list(zip(ylist, xlist))
+            deco_list.sort()
+            ylist, xlist = zip(*deco_list)
 
         return xlist, ylist

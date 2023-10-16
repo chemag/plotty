@@ -16,6 +16,7 @@ message Postfilter {
     moving_average = 11;
     ewma = 12;
     xsort = 13;
+    ysort = 14;
   }
   optional Type type = 1;
   optional Histogram histogram = 2;

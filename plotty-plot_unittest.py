@@ -264,6 +264,17 @@ parseDataTestCases = [
         "xlist": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
         "ylist": [9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0, 0.0],
     },
+    {
+        "name": "postfilter ysort",
+        "parameters": {
+            "sep": ",",
+            "xcol": 11,
+            "ycol": 9,
+            "ysort": True,
+        },
+        "xlist": [9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0, 0.0],
+        "ylist": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+    },
     # prefilter cases
     {
         "name": "prefilter basic",
