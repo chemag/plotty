@@ -190,6 +190,8 @@ default_values = {
     "ylim2": ["-", "-"],
     "xscale": None,
     "yscale": None,
+    "xshift": None,
+    "yshift": None,
     "xfactor": None,
     "yfactor": None,
     "use_mean": False,
@@ -207,8 +209,6 @@ default_values = {
     "xcol2": [],
     "ycol": [],
     "ycol2": [],
-    "xshift": [],
-    "yshift": [],
     "label": [],
     "prefilter": [],
     "postfilter": [],
@@ -669,19 +669,17 @@ def get_options(argv):
     )
     parser.add_argument(
         "--xshift",
-        action="append",
         dest="xshift",
         default=default_values["xshift"],
         metavar="XSHIFT",
-        help="use XSHIFT x shift(s)",
+        help="run shift function for x-axis data",
     )
     parser.add_argument(
         "--yshift",
-        action="append",
         dest="yshift",
         default=default_values["yshift"],
         metavar="YSHIFT",
-        help="use YSHIFT y shift(s)",
+        help="run shift function for y-axis data",
     )
     parser.add_argument(
         "--fmt",
@@ -1000,8 +998,6 @@ LINE_PARAMETERS = [
     "ycol",
     "xcol2",
     "ycol2",
-    "xshift",
-    "yshift",
     "fmt",
     "color",
     "label",
@@ -1179,7 +1175,16 @@ def convert_options_to_postfilters(options):
             postfilter_pb.parameter = float(parameter)
             postfilter_list.append(postfilter_pb)
     # process simpler values
-    # TODO(chema): process xshift, yshift
+    if options.xshift:
+        postfilter_pb = proto.plotty_pb2.Postfilter()
+        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.xshift
+        postfilter_pb.parameter = float(options.xshift)
+        postfilter_list.append(postfilter_pb)
+    if options.yshift:
+        postfilter_pb = proto.plotty_pb2.Postfilter()
+        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.yshift
+        postfilter_pb.parameter = float(options.yshift)
+        postfilter_list.append(postfilter_pb)
     if options.xfactor:
         postfilter_pb = proto.plotty_pb2.Postfilter()
         postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.xfactor
@@ -1284,8 +1289,6 @@ PARAMETER_AND_LIST = [
 # of the default line if the former does not exist
 PARAMETER_OPTION_LIST = [
     "id",
-    "xshift",
-    "yshift",
     "fmt",
     "color",
     "label",
