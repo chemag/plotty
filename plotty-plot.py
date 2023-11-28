@@ -459,6 +459,10 @@ def main(argv):
         # get all the info from the current line
         try:
             xlist, ylist = get_data(plot_pb, line_pb, gen_options)
+        except FileNotFoundError:
+            infile = config_lib.get_parameter(plot_pb, line_pb, "infile")
+            print(f"error: file not found: {infile}")
+            raise
         except:
             print(f"error: get_data(plot_pb, {line_pb=}, gen_options)")
         xy_data.append([xlist, ylist, line_pb])
