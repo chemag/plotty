@@ -17,10 +17,13 @@ message Postfilter {
     ewma = 12;
     xsort = 13;
     ysort = 14;
+    xeval = 15;
+    yeval = 16;
   }
   optional Type type = 1;
   optional Histogram histogram = 2;
   optional float parameter = 3;
+  optional string parameter_str = 4;
 }
 
 message PostfilterList {

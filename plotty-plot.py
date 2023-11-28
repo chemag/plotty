@@ -155,6 +155,7 @@ def get_data_raw_data(raw_data, plot_pb, line_pb, gen_options):
         postfilter = postfilter_lib.Postfilter(
             postfilter_type,
             postfilter_pb.parameter,
+            postfilter_pb.parameter_str,
             postfilter_pb.histogram,
             gen_options.debug,
         )

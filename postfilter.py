@@ -140,16 +140,17 @@ def get_histogram(xlist, histogram_pb, debug):
 
 # postfilter processing
 class Postfilter:
-    def __init__(self, _type, parameter, histogram, debug):
+    def __init__(self, _type, parameter, parameter_str, histogram, debug):
         self.type = _type
         self.parameter = parameter
+        self.parameter_str = parameter_str
         self.histogram = histogram
         self.debug = debug
 
     @classmethod
     def constructor(cls, string):
-        _type, parameter = string.split()
-        return cls(_type, parameter, None, 0)
+        _type, parameter, parameter_str = string.split()
+        return cls(_type, parameter, parameter_str, None, 0)
 
     def run(self, xlist, ylist):
         # 1. support for shift modes
@@ -212,5 +213,12 @@ class Postfilter:
             deco_list = list(zip(ylist, xlist))
             deco_list.sort()
             ylist, xlist = zip(*deco_list)
+        # 8. support for eval modes
+        elif self.type == "xeval":
+            # run eval on the first element (x)
+            xlist = list(eval(self.parameter_str) for x in xlist)
+        elif self.type == "yeval":
+            # run eval on the first element (y)
+            ylist = list(eval(self.parameter_str) for y in ylist)
 
         return xlist, ylist

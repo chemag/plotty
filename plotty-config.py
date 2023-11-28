@@ -128,6 +128,8 @@ DEFAULT_FMT_LIST = ["C%i%s" % (i % 10, ".") for i in range(MAX_INFILE_LIST_LEN)]
 #   * yshift [v]
 #   * xsort [v]
 #   * ysort [v]
+#   * xeval [v]
+#   * yeval [v]
 #   * label [v]
 #   * fmt [v]
 #   * color [v]
@@ -198,6 +200,8 @@ default_values = {
     "use_ewma": None,
     "xsort": False,
     "ysort": False,
+    "xeval": None,
+    "yeval": None,
     # per-line parameters
     "xcol": [],
     "xcol2": [],
@@ -615,6 +619,20 @@ def get_options(argv):
         default=default_values["ysort"],
         metavar="YSORT",
         help="sort data based on y-axis",
+    )
+    parser.add_argument(
+        "--xeval",
+        dest="xeval",
+        default=default_values["xeval"],
+        metavar="XEVAL",
+        help="run eval function for x-axis data",
+    )
+    parser.add_argument(
+        "--yeval",
+        dest="yeval",
+        default=default_values["yeval"],
+        metavar="YEVAL",
+        help="run eval function for y-axis data",
     )
     # per-line arguments
     parser.add_argument(
@@ -1159,6 +1177,18 @@ def convert_namespace_to_config(options, gen_options=None):
             postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.ysort
             postfilter_pb.parameter = 1.0
             line_pb.postfilter.append(postfilter_pb)
+        # postfilter.xeval
+        if options.xeval:
+            postfilter_pb = proto.plotty_pb2.Postfilter()
+            postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.xeval
+            postfilter_pb.parameter_str = options.xeval
+            line_pb.postfilter.append(postfilter_pb)
+        # postfilter.yeval
+        if options.yeval:
+            postfilter_pb = proto.plotty_pb2.Postfilter()
+            postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.yeval
+            postfilter_pb.parameter_str = options.yeval
+            line_pb.postfilter.append(postfilter_pb)
 
     plot_line_list = []
     plot_id = "cli"
@@ -1244,6 +1274,16 @@ def convert_namespace_to_postfilters(options):
         postfilter_pb = proto.plotty_pb2.Postfilter()
         postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.ysort
         postfilter_pb.parameter = options.ysort
+        postfilter_list.append(postfilter_pb)
+    if options.xeval:
+        postfilter_pb = proto.plotty_pb2.Postfilter()
+        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.xeval
+        postfilter_pb.parameter_str = options.xeval
+        postfilter_list.append(postfilter_pb)
+    if options.yeval:
+        postfilter_pb = proto.plotty_pb2.Postfilter()
+        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.yeval
+        postfilter_pb.parameter_str = options.yeval
         postfilter_list.append(postfilter_pb)
     return postfilter_list
 
