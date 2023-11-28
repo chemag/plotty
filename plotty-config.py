@@ -1142,53 +1142,9 @@ def convert_namespace_to_config(options, gen_options=None):
         # twinx
         line_pb.twinx = options.twinx > 0 and index >= options.twinx
         # postfilter
-        # if index < len(options.postfilter):
-        #    _type, parameter = options.postfilter[index].split()
-        #    postfilter_pb = proto.plotty_pb2.Postfilter()
-        #    assert _type in proto.plotty_pb2.Postfilter.Type.keys(), (
-        #        f'error: invalid postfilter type: {_type}. Valid values'
-        #        f'are {proto.plotty_pb2.Postfilter.Type.keys()}')
-        #    postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.Value(_type)
-        #    postfilter_pb.parameter = float(parameter)
-        #    line_pb.postfilter.append(postfilter_pb)
-        # postfilter.xshift
-        if index < len(options.xshift):
-            xshift = float(options.xshift[index])
-            postfilter_pb = proto.plotty_pb2.Postfilter()
-            postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.xshift
-            postfilter_pb.parameter = xshift
-            line_pb.postfilter.append(postfilter_pb)
-        # postfilter.yshift
-        if index < len(options.yshift):
-            yshift = float(options.yshift[index])
-            postfilter_pb = proto.plotty_pb2.Postfilter()
-            postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.yshift
-            postfilter_pb.parameter = yshift
-            line_pb.postfilter.append(postfilter_pb)
-        # postfilter.xsort
-        if options.xsort:
-            postfilter_pb = proto.plotty_pb2.Postfilter()
-            postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.xsort
-            postfilter_pb.parameter = 1.0
-            line_pb.postfilter.append(postfilter_pb)
-        # postfilter.ysort
-        if options.ysort:
-            postfilter_pb = proto.plotty_pb2.Postfilter()
-            postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.ysort
-            postfilter_pb.parameter = 1.0
-            line_pb.postfilter.append(postfilter_pb)
-        # postfilter.xeval
-        if options.xeval:
-            postfilter_pb = proto.plotty_pb2.Postfilter()
-            postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.xeval
-            postfilter_pb.parameter_str = options.xeval
-            line_pb.postfilter.append(postfilter_pb)
-        # postfilter.yeval
-        if options.yeval:
-            postfilter_pb = proto.plotty_pb2.Postfilter()
-            postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.yeval
-            postfilter_pb.parameter_str = options.yeval
-            line_pb.postfilter.append(postfilter_pb)
+        postfilter_list = convert_options_to_postfilters(options)
+        for postfilter in postfilter_list:
+            line_pb.postfilter.append(postfilter)
 
     plot_line_list = []
     plot_id = "cli"
@@ -1205,6 +1161,11 @@ def convert_namespace_to_postfilters(options):
         postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.hist
         postfilter_pb.histogram.CopyFrom(convert_namespace_to_histogram(options))
         postfilter_list.append(postfilter_pb)
+    return postfilter_list
+
+
+def convert_options_to_postfilters(options):
+    postfilter_list = []
     # process generic values
     if options.postfilter:
         for postfilter in options.postfilter:
