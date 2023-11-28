@@ -8,6 +8,7 @@
 # $ echo -e "1,2\n2,2\n3,5\n4,7\n5,1\n" | ./plotty-plot.py -i - /tmp/plot.png
 """
 
+import csv
 import datetime
 import importlib
 import math
@@ -68,7 +69,7 @@ def get_column(line, sep, col, sep2, col2):
         # empty line
         return None
     # get component
-    val = line.split(sep)[col]
+    val = list(csv.reader([line], delimiter=sep, quotechar='"'))[0][col]
     if col2 is not None and col2:
         # use sep1, then sep2
         if not val:
