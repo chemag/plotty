@@ -427,8 +427,12 @@ def main(argv):
             infile = config_lib.get_parameter(plot_pb, line_pb, "infile")
             print(f"error: file not found: {infile}")
             raise
+        except AssertionError as ae:
+            print(f"error: get_data(plot_pb, {line_pb=}, gen_options)\n  {ae}")
+            raise
         except:
             print(f"error: get_data(plot_pb, {line_pb=}, gen_options)")
+            raise
         xy_data.append([xlist, ylist, line_pb])
 
     if gen_options.dry_run:
