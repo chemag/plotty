@@ -127,6 +127,9 @@ def get_data_raw_data(raw_data, plot_pb, line_pb, gen_options):
         # used in histograms: value will be discarded
         ycol = 0
     ycol = get_column_id(ycol, column_names)
+    xtickscol = config_lib.get_parameter(plot_pb, line_pb, "xtickscol")
+    if xtickscol:
+        xtickscol = get_column_id(xtickscol, column_names)
 
     # 4. parse all the lines into (xlist, ylist)
     sep2 = config_lib.get_parameter(plot_pb, line_pb, "sep2")
@@ -137,6 +140,7 @@ def get_data_raw_data(raw_data, plot_pb, line_pb, gen_options):
     yfmt = config_lib.get_parameter(plot_pb, line_pb, "yfmt")
     xlist = []
     ylist = []
+    xticklist = []
     for i, line in enumerate(lines):
         if not line:
             # empty line
@@ -146,10 +150,14 @@ def get_data_raw_data(raw_data, plot_pb, line_pb, gen_options):
             continue
         x = get_line_item(line, i, sep, xcol, sep2, xcol2)
         y = get_line_item(line, i, sep, ycol, sep2, ycol2)
+        if xtickscol:
+            xtick = get_line_item(line, i, sep, xtickscol, sep2)
         if x is not None and y is not None:
             # append values
             xlist.append(fmt_convert(x, xfmt))
             ylist.append(fmt_convert(y, yfmt))
+            if xtickscol:
+                xticklist.append(xtick)
 
     # 5. postfilter values
     postfilter_list = config_lib.get_parameter(plot_pb, line_pb, "postfilter")
@@ -163,7 +171,7 @@ def get_data_raw_data(raw_data, plot_pb, line_pb, gen_options):
             gen_options.debug,
         )
         xlist, ylist = postfilter.run(xlist, ylist)
-    return xlist, ylist
+    return xlist, ylist, xticklist
 
 
 # convert axis format
@@ -205,7 +213,7 @@ def create_graph_begin(plot_pb):
     if xfmt == "unix":
         xfmt = md.DateFormatter(plot_pb.fmtdate)
         ax1.xaxis.set_major_formatter(xfmt)
-    return ax1
+    return fig, ax1
 
 
 def matplotlib_fmt_parse(fmt):
@@ -291,7 +299,7 @@ def create_graph_draw(ax, xlist, ylist, line_pb, plot_pb, gen_options):
         print(f"ax.plot(xlist: {xlist} ylist: {ylist} label: {line_pb.label}")
 
 
-def create_graph_end(ax, ylabel, ylim, plot_pb):
+def create_graph_end(ax, xticks, ylabel, ylim, plot_pb):
     # 1. x-axis fixes
     if plot_pb.xfmt == "int":
         # make sure the ticks are all integers
@@ -306,6 +314,10 @@ def create_graph_end(ax, ylabel, ylim, plot_pb):
             )
         )
         ax.set_xticks(range(int(ax.get_xticks()[0]), int(ax.get_xticks()[-1]), step))
+    if xticks:
+        ax.set_xticks(
+            list(xticks.keys()), labels=list(xticks.values()), rotation=30, fontsize=8
+        )
 
     # 2. y-axis fixes
     ax.set_ylabel(ylabel)
@@ -417,7 +429,7 @@ def main(argv):
             line_pb.infile = "/dev/fd/0"
         # get all the info from the current line
         try:
-            xlist, ylist = get_data(plot_pb, line_pb, gen_options)
+            xlist, ylist, xticklist = get_data(plot_pb, line_pb, gen_options)
         except FileNotFoundError:
             infile = config_lib.get_parameter(plot_pb, line_pb, "infile")
             print(f"error: file not found: {infile}")
@@ -428,7 +440,7 @@ def main(argv):
         except:
             print(f"error: get_data(plot_pb, {line_pb=}, gen_options)")
             raise
-        xy_data.append([xlist, ylist, line_pb])
+        xy_data.append([xlist, ylist, xticklist, line_pb])
 
     if gen_options.dry_run:
         return xy_data
@@ -437,7 +449,8 @@ def main(argv):
     # create the main axis
     ax = []
     axinfo = []
-    ax.append(create_graph_begin(plot_pb))
+    fig, axi = create_graph_begin(plot_pb)
+    ax.append(axi)
     ylabel = plot_pb.ylabel
     ylim = (plot_pb.ylim.min, plot_pb.ylim.max)
 
@@ -452,14 +465,18 @@ def main(argv):
     # 3. create the graph
     # 3.1. add each of the lines in xy_data
     axid = 0
-    for (xlist, ylist, line_pb) in xy_data:
+    for xlist, ylist, xticklist, line_pb in xy_data:
         axid = 1 if line_pb.twinx else 0
         create_graph_draw(ax[axid], xlist, ylist, line_pb, plot_pb, gen_options)
+    xticks = None
+    if xticklist:
+        fig.tight_layout(pad=2.16, w_pad=2.16, h_pad=4.32)
+        xticks = dict(zip(xlist, xticklist))
 
     # 3.2. set final graph details
     for axid, (ylabel, ylim) in enumerate(axinfo):
         # set the values
-        create_graph_end(ax[axid], ylabel, ylim, plot_pb)
+        create_graph_end(ax[axid], xticks, ylabel, ylim, plot_pb)
 
     # 3.3. set common legend
     if plot_pb.HasField("legend_loc") and plot_pb.legend_loc != "none":

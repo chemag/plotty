@@ -57,7 +57,8 @@ message Line {
   optional string ycol2 = 12;
   optional string sep = 13;
   optional string sep2 = 14;
-  optional bool twinx = 15;
+  optional string xtickscol = 15;
+  optional bool twinx = 16;
   message Data {
     message Point {
       optional float x = 1;
@@ -65,7 +66,7 @@ message Line {
     }
     repeated Point point = 1;
   }
-  optional Data data = 16;
+  optional Data data = 17;
 }
 
 message Plot {

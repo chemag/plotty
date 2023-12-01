@@ -67,3 +67,23 @@ plot {
         }
     }
 }
+
+
+plot {
+    id: "xtickscol"
+    xlabel: "x-axis label"
+    ylabel: "y-axis label"
+    title: "title here"
+    default_line {
+        xcol: "myxcol"
+        ycol: "myycol"
+        xtickscol: "myxtickscol"
+        header: true
+    }
+    line {
+        id: "data"
+        infile: "data.csv"
+        fmt: "o-black"
+        label: "data line"
+    }
+}

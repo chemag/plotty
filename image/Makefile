@@ -18,4 +18,7 @@ lines.png:
         --lineid simple/line \
         $@
 
-
+xtickstxt.png:
+	../plotty-plot.py --inplot plots.pbtxt \
+        --lineid xtickscol/data \
+        $@

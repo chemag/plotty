@@ -1294,6 +1294,7 @@ PARAMETER_OPTION_LIST = [
     "header",
     "xcol",
     "ycol",
+    "xtickscol",
     "xcol2",
     "ycol2",
     "sep",

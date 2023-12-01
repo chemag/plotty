@@ -691,7 +691,7 @@ class MyTest(unittest.TestCase):
             gen_options, plot_line_list = config_lib.get_options(argv)
             plot_pb, _ = plot_line_list[0]
             line_pb = plot_pb.line[0]
-            xlist, ylist = plotty_plot.get_data_raw_data(
+            xlist, ylist, _ = plotty_plot.get_data_raw_data(
                 dataGetDataTestCases, plot_pb, line_pb, gen_options
             )
             msg = 'unittest failed: "%s"' % test_case["name"]
