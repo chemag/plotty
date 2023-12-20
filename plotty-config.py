@@ -1023,17 +1023,17 @@ GENERIC_PARAMETERS = [
 
 
 def convert_scale_string_to_config(scale):
-    scale_pb = proto.plotty_pb2.Plot.Scale()
+    scale_pb = proto.plotty_pb2.Plot.Scale
     if scale is None or scale == "none":
-        scale_pb = proto.plotty_pb2._PLOT_SCALE.none
+        scale_pb = proto.plotty_pb2.Plot.Scale.none
     elif scale == "linear":
-        scale_pb = proto.plotty_pb2._PLOT_SCALE.linear
+        scale_pb = proto.plotty_pb2.Plot.Scale.linear
     elif scale == "log":
-        scale_pb = proto.plotty_pb2._PLOT_SCALE.log
+        scale_pb = proto.plotty_pb2.Plot.Scale.log
     elif scale == "symlog":
-        scale_pb = proto.plotty_pb2._PLOT_SCALE.symlog
+        scale_pb = proto.plotty_pb2.Plot.Scale.symlog
     elif scale == "logit":
-        scale_pb = proto.plotty_pb2._PLOT_SCALE.logit
+        scale_pb = proto.plotty_pb2.Plot.Scale.logit
     return scale_pb
 
 
@@ -1263,9 +1263,7 @@ def convert_namespace_to_histogram(options):
     histogram_pb.nozeroes = options.histogram_nozeroes
     if options.histogram_sigma is not None:
         histogram_pb.sigma = options.histogram_sigma
-    histogram_pb.type = proto.plotty_pb2._HISTOGRAM_TYPE.values_by_name[
-        options.histogram_type
-    ].number
+    histogram_pb.type = proto.plotty_pb2.Histogram.Type.Number(options.histogram_type)
     return histogram_pb
 
 
@@ -1309,10 +1307,10 @@ def get_parameter(plot_pb, line_pb, par):
     # 1. Plot parameters
     if par == "xfmt":
         xfmt_id = plot_pb.xfmt
-        return proto.plotty_pb2._PLOT_COLUMNFMT.values_by_number[xfmt_id].name
+        return proto.plotty_pb2.Plot.ColumnFmt.Name(xfmt_id)
     if par == "yfmt":
         yfmt_id = plot_pb.yfmt
-        return proto.plotty_pb2._PLOT_COLUMNFMT.values_by_number[yfmt_id].name
+        return proto.plotty_pb2.Plot.ColumnFmt.Name(yfmt_id)
 
     # 2. Line parameters
     if par in PARAMETER_OPTION_LIST:
@@ -1353,20 +1351,20 @@ def get_parameter(plot_pb, line_pb, par):
 
 
 def get_postfilter_type(postfilter_pb):
-    return proto.plotty_pb2._POSTFILTER_TYPE.values_by_number[postfilter_pb.type].name
+    return proto.plotty_pb2.Postfilter.Type.Name(postfilter_pb.type)
 
 
 def get_histogram_type(histogram_pb):
-    return proto.plotty_pb2._HISTOGRAM_TYPE.values_by_number[histogram_pb.type].name
+    return proto.plotty_pb2.Postfilter.Type.Name(histogram_pb.type)
 
 
 def get_column_fmt_type(fmt):
-    return proto.plotty_pb2._PLOT_COLUMNFMT.values_by_number[fmt].name
+    return proto.plotty_pb2.Plot.ColumnFmt.Name(fmt)
 
 
 def scale_is_none(scale):
     return scale == proto.plotty_pb2.Plot.Scale.none
 
 
-def get_scale_type(scale):
-    return proto.plotty_pb2._PLOT_SCALE.values_by_number[scale].name
+def get_scale_type(scale_id):
+    return proto.plotty_pb2.Plot.Scale.Name(scale_id)
