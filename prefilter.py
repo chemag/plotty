@@ -97,6 +97,9 @@ class Prefilter:
             try:
                 lval = float(lval)
             except ValueError:
+                # comparisons with no data are always False
+                if lval == "":
+                    return False
                 # support for invalid comparisons in "False and <invalid>"
                 # and "True or <invalid>" cases
                 return "invalid"
