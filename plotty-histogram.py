@@ -1,18 +1,223 @@
 #!/usr/bin/env python3
 
-"""histogram.py: simple histogram plotter.
+"""plotty-histogram.py module description.
 
-# runme
-# $ echo -e "1\n2\n1\n2\n3\n1\n4\n" | ./plotty-histogram.py -i - /tmp/bar.png
+Produces a histogram from a column in a given CSV input file.
 """
 
-import sys
-import importlib
 
-plotty_plot = importlib.import_module("plotty-plot")
+import argparse
+import numpy as np
+import pandas as pd
+import sys
+
+
+__version__ = "0.1"
+
+HISTOGRAM_TYPES = ("raw", "pdf", "cdf")
+
+
+default_values = {
+    "debug": 0,
+    "dry_run": False,
+    "col": None,
+    "nbins": 100,
+    "header": True,
+    "zeroes": True,
+    "sigma": None,
+    "type": "raw",
+    "infile": None,
+    "outfile": None,
+}
+
+
+def calculate_histogram(options):
+    # read infile
+    indf = pd.read_csv(options.infile, header=0 if options.header else None)
+    # get the column
+    if isinstance(options.col, int):
+        column = indf.iloc[:, int(options.col)]
+    else:
+        column = indf.loc[:, options.col]
+    # process the data
+    # get the histogram
+    # col_min = column.min()
+    # col_max = column.max()
+    density = True if (options.type in ("pdf", "cdf")) else False
+    hist, bin_edges = np.histogram(column, bins=options.nbins, density=density)
+    # center the histogram (bin_edges points to the left side)
+    bin_edges = (bin_edges[1:] + bin_edges[:-1]) / 2
+    # add up the values for a CDF
+    if options.type == "cdf":
+        raise AssertionError("error: CDF mode unimplemented")
+    # create the output dataframe
+    outdf = pd.DataFrame({"x": bin_edges, "y": hist})
+    if not options.zeroes:
+        # remove zeroes
+        outdf = outdf[outdf["y"] != 0]
+    # write outfile
+    outdf.to_csv(options.outfile, index=False)
+
+
+def get_options(argv):
+    """Generic option parser.
+
+    Args:
+        argv: list containing arguments
+
+    Returns:
+        Namespace - An argparse.ArgumentParser-generated option object
+    """
+    # init parser
+    # usage = 'usage: %prog [options] arg1 arg2'
+    # parser = argparse.OptionParser(usage=usage)
+    # parser.print_help() to get argparse.usage (large help)
+    # parser.print_usage() to get argparse.usage (just usage line)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="store_true",
+        dest="version",
+        default=False,
+        help="Print version",
+    )
+    parser.add_argument(
+        "-d",
+        "--debug",
+        action="count",
+        dest="debug",
+        default=default_values["debug"],
+        help="Increase verbosity (use multiple times for more)",
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_const",
+        dest="debug",
+        const=-1,
+        help="Zero verbosity",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        dest="dry_run",
+        default=default_values["dry_run"],
+        help="Dry run",
+    )
+    parser.add_argument(
+        "--col",
+        action="store",
+        dest="col",
+        default=default_values["col"],
+        metavar="COL",
+        help="use COL column",
+    )
+    parser.add_argument(
+        "--nbins",
+        action="store",
+        type=int,
+        dest="nbins",
+        default=default_values["nbins"],
+        metavar="NBINS",
+        help="use NBINS bins",
+    )
+    parser.add_argument(
+        "--header",
+        dest="header",
+        action="store_true",
+        default=default_values["header"],
+        help="Input file has CSV header%s"
+        % (" [default]" if default_values["header"] else ""),
+    )
+    parser.add_argument(
+        "--no-header",
+        dest="header",
+        action="store_false",
+        help="Input file does not have CSV header%s"
+        % (" [default]" if not default_values["header"] else ""),
+    )
+    parser.add_argument(
+        "--zeroes",
+        dest="zeroes",
+        action="store_true",
+        default=default_values["zeroes"],
+        help="Do not ignore zero elements%s"
+        % (" [default]" if default_values["zeroes"] else ""),
+    )
+    parser.add_argument(
+        "--no-zeroes",
+        dest="zeroes",
+        action="store_false",
+        help="Ignore zero elements%s"
+        % (" [default]" if not default_values["zeroes"] else ""),
+    )
+    parser.add_argument(
+        "--sigma",
+        action="store",
+        type=int,
+        dest="sigma",
+        default=default_values["sigma"],
+        metavar="SIGMA",
+        help="use SIGMA sigma",
+    )
+    parser.add_argument(
+        "--type",
+        action="store",
+        type=str,
+        dest="type",
+        default=default_values["type"],
+        choices=HISTOGRAM_TYPES,
+        metavar="[%s]"
+        % (
+            " | ".join(
+                HISTOGRAM_TYPES,
+            )
+        ),
+        help="enum arg",
+    )
+    parser.add_argument(
+        "-i",
+        "--infile",
+        dest="infile",
+        type=str,
+        default=default_values["infile"],
+        metavar="input-file",
+        help="input file",
+    )
+    parser.add_argument(
+        "-o",
+        "--outfile",
+        dest="outfile",
+        type=str,
+        default=default_values["outfile"],
+        metavar="output-file",
+        help="output file",
+    )
+    # do the parsing
+    options = parser.parse_args(argv[1:])
+    if options.version:
+        return options
+    return options
+
+
+def main(argv):
+    # parse options
+    options = get_options(argv)
+    if options.version:
+        print("version: %s" % __version__)
+        sys.exit(0)
+    # get infile/outfile
+    if options.infile is None or options.infile == "-":
+        options.infile = "/dev/fd/0"
+    if options.outfile is None or options.outfile == "-":
+        options.outfile = "/dev/fd/1"
+    # print results
+    if options.debug > 0:
+        print(options)
+    # do something
+    calculate_histogram(options)
+
 
 if __name__ == "__main__":
-    # add "--histogram" option
-    sys.argv.append("--histogram")
     # at least the CLI program name: (CLI) execution
-    plotty_plot.main(sys.argv)
+    main(sys.argv)
