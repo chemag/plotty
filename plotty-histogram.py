@@ -39,10 +39,10 @@ def calculate_histogram(options):
         column = indf.iloc[:, int(options.col)]
     else:
         column = indf.loc[:, options.col]
+    # remove NaNs
+    column = column.dropna()
     # process the data
     # get the histogram
-    # col_min = column.min()
-    # col_max = column.max()
     density = True if (options.type in ("pdf", "cdf")) else False
     hist, bin_edges = np.histogram(column, bins=options.nbins, density=density)
     # center the histogram (bin_edges points to the left side)
