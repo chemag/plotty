@@ -297,6 +297,9 @@ def create_graph_draw(ax, xlist, ylist, line_pb, plot_pb, gen_options):
     if gen_options.debug > 1:
         print(f"ax.plot(xlist: {xlist} ylist: {ylist} label: {line_pb.label}")
 
+
+def create_graph_end(ax, ylabel, ylim, plot_pb):
+    # 1. x-axis fixes
     if plot_pb.xfmt == "int":
         # make sure the ticks are all integers
         num_values = len(ax.get_xticks())
@@ -311,8 +314,7 @@ def create_graph_draw(ax, xlist, ylist, line_pb, plot_pb, gen_options):
         )
         ax.set_xticks(range(int(ax.get_xticks()[0]), int(ax.get_xticks()[-1]), step))
 
-
-def create_graph_end(ax, ylabel, ylim, plot_pb):
+    # 2. y-axis fixes
     ax.set_ylabel(ylabel)
 
     # set xlim/ylim
@@ -455,18 +457,18 @@ def main(argv):
         axinfo.append([ylabel2, ylim2])
 
     # 3. create the graph
-    # add each of the lines in xy_data
+    # 3.1. add each of the lines in xy_data
     axid = 0
     for (xlist, ylist, line_pb) in xy_data:
         axid = 1 if line_pb.twinx else 0
         create_graph_draw(ax[axid], xlist, ylist, line_pb, plot_pb, gen_options)
 
-    # set final graph details
+    # 3.2. set final graph details
     for axid, (ylabel, ylim) in enumerate(axinfo):
         # set the values
         create_graph_end(ax[axid], ylabel, ylim, plot_pb)
 
-    # set common legend
+    # 3.3. set common legend
     if plot_pb.HasField("legend_loc") and plot_pb.legend_loc != "none":
         # https://stackoverflow.com/a/14344146
         lin_list = []
