@@ -124,7 +124,11 @@ def get_data_raw_data(raw_data, plot_pb, line_pb, gen_options):
     # 3. get column ids
     xcol = config_lib.get_parameter(plot_pb, line_pb, "xcol")
     ycol = config_lib.get_parameter(plot_pb, line_pb, "ycol")
-    xcol, ycol = get_column_ids(xcol, ycol, column_names)
+    xcol = get_column_id(xcol, column_names)
+    if ycol is None:
+        # used in histograms: value will be discarded
+        ycol = 0
+    ycol = get_column_id(ycol, column_names)
 
     # 4. parse all the lines into (xlist, ylist)
     sep2 = config_lib.get_parameter(plot_pb, line_pb, "sep2")
@@ -179,25 +183,15 @@ def fmt_convert(item, fmt):
     raise Exception("Error: invalid fmt (%s)" % fmt)
 
 
-def get_column_ids(xcol, ycol, column_names):
+def get_column_id(col, column_names):
     # get the column IDs
-    if utils.is_int(xcol):
-        xcol = int(xcol)
+    if utils.is_int(col):
+        col = int(col)
     else:
         # look for named columns
-        assert xcol in column_names, 'error: invalid xcol name: "%s"' % xcol
-        xcol = column_names.index(xcol)
-    if ycol is None:
-        # used in histograms: value will be discarded
-        ycol = 0
-    if utils.is_int(ycol):
-        ycol = int(ycol)
-    else:
-        # look for named columns
-        assert ycol in column_names, 'error: invalid ycol name: "%s"' % ycol
-        ycol = column_names.index(ycol)
-
-    return xcol, ycol
+        assert col in column_names, 'error: invalid col name: "%s"' % col
+        col = column_names.index(col)
+    return col
 
 
 def create_graph_begin(plot_pb):
