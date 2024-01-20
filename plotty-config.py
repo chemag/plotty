@@ -1263,7 +1263,7 @@ def convert_namespace_to_histogram(options):
     histogram_pb.nozeroes = options.histogram_nozeroes
     if options.histogram_sigma is not None:
         histogram_pb.sigma = options.histogram_sigma
-    histogram_pb.type = proto.plotty_pb2.Histogram.Type.Number(options.histogram_type)
+    histogram_pb.type = proto.plotty_pb2.Histogram.Type.Value(options.histogram_type)
     return histogram_pb
 
 
@@ -1356,7 +1356,7 @@ def get_postfilter_type(postfilter_pb):
 
 
 def get_histogram_type(histogram_pb):
-    return proto.plotty_pb2.Postfilter.Type.Name(histogram_pb.type)
+    return proto.plotty_pb2.Histogram.Type.Name(histogram_pb.type)
 
 
 def get_column_fmt_type(fmt):

@@ -736,19 +736,18 @@ class MyTest(unittest.TestCase):
             self.assertTrue(len(test_case["xy_data"]) == len(xy_data), msg)
             for i in range(len(xy_data)):
                 expected = test_case["xy_data"][i]
-                value = xy_data[i]
+                xlist, ylist, _, line_pb = xy_data[i]
                 # compare xlist
                 self.assertTrue(
-                    compareFloatList(expected[0], value[0]),
-                    msg=f"{msg} {expected[0]} != {value[0]}",
+                    compareFloatList(expected[0], xlist),
+                    msg=f"{msg} {expected[0]} != {xlist}",
                 )
                 # compare ylist
                 self.assertTrue(
-                    compareFloatList(expected[1], value[1]),
-                    msg=f"{msg} {expected[1]} != {value[1]}",
+                    compareFloatList(expected[1], ylist),
+                    msg=f"{msg} {expected[1]} != {ylist}",
                 )
                 # compare label, fmt
-                line_pb = value[2]
                 self.assertTrue(
                     expected[2] == line_pb.label,
                     msg=f"{msg} {expected[2]} != {line_pb.label}",
