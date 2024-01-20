@@ -80,12 +80,10 @@ def get_column(line, sep, col, sep2, col2):
     return val
 
 
-def parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2):
+def get_line_item(line, i, sep, col, sep2, col2=None):
     # get x component
-    x = i if xcol == -1 else get_column(line, sep, xcol, sep2, xcol2)
-    # get y component
-    y = i if ycol == -1 else get_column(line, sep, ycol, sep2, ycol2)
-    return x, y
+    item = i if col == -1 else get_column(line, sep, col, sep2, col2)
+    return item
 
 
 def get_data(plot_pb, line_pb, gen_options):
@@ -146,7 +144,8 @@ def get_data_raw_data(raw_data, plot_pb, line_pb, gen_options):
         # prefilter lines
         if not prefilter.match_line(line, sep):
             continue
-        x, y = parse_line(line, i, sep, xcol, ycol, sep2, xcol2, ycol2)
+        x = get_line_item(line, i, sep, xcol, sep2, xcol2)
+        y = get_line_item(line, i, sep, ycol, sep2, ycol2)
         if x is not None and y is not None:
             # append values
             xlist.append(fmt_convert(x, xfmt))
