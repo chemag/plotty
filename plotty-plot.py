@@ -105,7 +105,7 @@ def read_data(data):
     for point in data.point:
         xlist.append(point.x if point.HasField("x") else 0)
         ylist.append(point.y if point.HasField("y") else 0)
-    return xlist, ylist
+    return xlist, ylist, None
 
 
 def get_data_raw_data(raw_data, plot_pb, line_pb, gen_options):
