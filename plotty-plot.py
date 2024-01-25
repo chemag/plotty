@@ -465,13 +465,16 @@ def main(argv):
     # 3. create the graph
     # 3.1. add each of the lines in xy_data
     axid = 0
+    # get prospective xticklist
+    xticks = dict()
     for xlist, ylist, xticklist, line_pb in xy_data:
         axid = 1 if line_pb.twinx else 0
         create_graph_draw(ax[axid], xlist, ylist, line_pb, plot_pb, gen_options)
-    xticks = None
-    if xticklist:
+        if xticklist is not None:
+            xticks.update(dict(zip(xlist, xticklist)))
+
+    if xticks:
         fig.tight_layout(pad=2.16, w_pad=2.16, h_pad=4.32)
-        xticks = dict(zip(xlist, xticklist))
 
     # 3.2. set final graph details
     for axid, (ylabel, ylim) in enumerate(axinfo):
