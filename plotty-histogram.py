@@ -26,6 +26,7 @@ default_values = {
     "range-max": None,
     "header": True,
     "zeroes": True,
+    "zeroes-strip": False,
     "sigma": None,
     "type": "raw",
     "infile": None,
@@ -61,6 +62,10 @@ def calculate_histogram(options):
     if not options.zeroes:
         # remove zeroes
         outdf = outdf[outdf["y"] != 0]
+    elif options.zeroes_strip:
+        first_element = outdf[outdf.y != 0].index[0]
+        last_element = outdf[outdf.y != 0].index[-1]
+        outdf = outdf.iloc[first_element:last_element]
     # write outfile
     outdf.to_csv(options.outfile, index=False)
 
@@ -174,6 +179,21 @@ def get_options(argv):
         action="store_false",
         help="Ignore zero elements%s"
         % (" [default]" if not default_values["zeroes"] else ""),
+    )
+    parser.add_argument(
+        "--zeroes-strip",
+        dest="zeroes_strip",
+        action="store_true",
+        default=default_values["zeroes-strip"],
+        help="Do not ignore zero elements%s"
+        % (" [default]" if default_values["zeroes-strip"] else ""),
+    )
+    parser.add_argument(
+        "--no-zeroes-strip",
+        dest="zeroes_strip",
+        action="store_false",
+        help="Ignore zero elements%s"
+        % (" [default]" if not default_values["zeroes-strip"] else ""),
     )
     parser.add_argument(
         "--sigma",
