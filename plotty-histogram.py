@@ -22,6 +22,8 @@ default_values = {
     "dry_run": False,
     "col": None,
     "nbins": 100,
+    "range-min": None,
+    "range-max": None,
     "header": True,
     "zeroes": True,
     "sigma": None,
@@ -44,7 +46,11 @@ def calculate_histogram(options):
     # process the data
     # get the histogram
     density = True if (options.type in ("pdf", "cdf")) else False
-    hist, bin_edges = np.histogram(column, bins=options.nbins, density=density)
+    range_min = options.range_min if options.range_min is not None else column.min()
+    range_max = options.range_max if options.range_max is not None else column.max()
+    hist, bin_edges = np.histogram(
+        column, bins=options.nbins, range=(range_min, range_max), density=density
+    )
     # center the histogram (bin_edges points to the left side)
     bin_edges = (bin_edges[1:] + bin_edges[:-1]) / 2
     # add up the values for a CDF
@@ -120,6 +126,24 @@ def get_options(argv):
         default=default_values["nbins"],
         metavar="NBINS",
         help="use NBINS bins",
+    )
+    parser.add_argument(
+        "--range-min",
+        action="store",
+        type=float,
+        dest="range_min",
+        default=default_values["range-min"],
+        metavar="RANGE-MIN",
+        help="use RANGE-MIN as range min",
+    )
+    parser.add_argument(
+        "--range-max",
+        action="store",
+        type=float,
+        dest="range_max",
+        default=default_values["range-max"],
+        metavar="RANGE-MAX",
+        help="use RANGE-MAX as range max",
     )
     parser.add_argument(
         "--header",
