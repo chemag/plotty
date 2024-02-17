@@ -128,8 +128,7 @@ def get_data_raw_data(raw_data, plot_pb, line_pb, gen_options):
         ycol = 0
     ycol = get_column_id(ycol, column_names)
     xtickscol = config_lib.get_parameter(plot_pb, line_pb, "xtickscol")
-    if xtickscol:
-        xtickscol = get_column_id(xtickscol, column_names)
+    xtickscol = get_column_id(xtickscol, column_names) if xtickscol else None
 
     # 4. parse all the lines into (xlist, ylist)
     sep2 = config_lib.get_parameter(plot_pb, line_pb, "sep2")
@@ -150,13 +149,13 @@ def get_data_raw_data(raw_data, plot_pb, line_pb, gen_options):
             continue
         x = get_line_item(line, i, sep, xcol, sep2, xcol2)
         y = get_line_item(line, i, sep, ycol, sep2, ycol2)
-        if xtickscol:
+        if xtickscol is not None:
             xtick = get_line_item(line, i, sep, xtickscol, sep2)
         if x is not None and y is not None:
             # append values
             xlist.append(fmt_convert(x, xfmt))
             ylist.append(fmt_convert(y, yfmt))
-            if xtickscol:
+            if xtickscol is not None:
                 xticklist.append(xtick)
 
     # 5. postfilter values
