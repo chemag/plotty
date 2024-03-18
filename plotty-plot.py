@@ -295,7 +295,9 @@ def create_graph_draw(ax, xlist, ylist, line_pb, plot_pb, gen_options):
         print(")")
 
     if gen_options.debug > 1:
-        print(f"ax.plot [id: {line_pb.id}] (xlist: {xlist} ylist: {ylist} label: {line_pb.label}")
+        print(
+            f"ax.plot [id: {line_pb.id}] (xlist: {xlist} ylist: {ylist} label: {line_pb.label}"
+        )
 
 
 def create_graph_end(ax, xticks, ylabel, ylim, plot_pb):
