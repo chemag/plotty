@@ -91,6 +91,10 @@ class Prefilter:
         if fop in ("eq", "ne"):
             if (fop == "eq" and lval != fval) or (fop == "ne" and lval == fval):
                 return False
+            if fval == "None" and (
+                (fop == "eq" and bool(lval)) or (fop == "ne" and not bool(lval))
+            ):
+                return False
         # implement gt, ge, lt, le
         elif fop in ("gt", "ge", "lt", "le"):
             # make sure line val and prefilter val are numbers
