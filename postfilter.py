@@ -10,15 +10,6 @@ import numpy as np
 import os
 import sys
 import scipy.optimize
-from google.protobuf import text_format
-
-config_lib = importlib.import_module("plotty-config")
-utils = importlib.import_module("utils")
-
-SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
-SCRIPT_ROOT_DIR = os.path.join(SCRIPT_DIR, ".")
-sys.path.append(SCRIPT_ROOT_DIR)
-import proto.plotty_pb2  # noqa: E402
 
 
 # simple fitting function

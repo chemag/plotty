@@ -15,7 +15,7 @@ from google.protobuf import text_format
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 SCRIPT_ROOT_DIR = os.path.join(SCRIPT_DIR, ".")
 sys.path.append(SCRIPT_ROOT_DIR)
-import proto.plotty_pb2  # noqa: E402
+from protobuf import plotty_pb2  # noqa: E402
 
 prefilter_lib = importlib.import_module("prefilter")
 postfilter_lib = importlib.import_module("postfilter")
@@ -231,7 +231,7 @@ default_values = {
 
 def plotty_config_read(infile):
     print(f"read plotty config: {infile}")
-    plots_pb = proto.plotty_pb2.Plots()
+    plots_pb = plotty_pb2.Plots()
     with open(infile, "rb") as fd:
         try:
             pbtxt_contents = fd.read()
@@ -1023,17 +1023,17 @@ GENERIC_PARAMETERS = [
 
 
 def convert_scale_string_to_config(scale):
-    scale_pb = proto.plotty_pb2.Plot.Scale
+    scale_pb = plotty_pb2.Plot.Scale
     if scale is None or scale == "none":
-        scale_pb = proto.plotty_pb2.Plot.Scale.none
+        scale_pb = plotty_pb2.Plot.Scale.none
     elif scale == "linear":
-        scale_pb = proto.plotty_pb2.Plot.Scale.linear
+        scale_pb = plotty_pb2.Plot.Scale.linear
     elif scale == "log":
-        scale_pb = proto.plotty_pb2.Plot.Scale.log
+        scale_pb = plotty_pb2.Plot.Scale.log
     elif scale == "symlog":
-        scale_pb = proto.plotty_pb2.Plot.Scale.symlog
+        scale_pb = plotty_pb2.Plot.Scale.symlog
     elif scale == "logit":
-        scale_pb = proto.plotty_pb2.Plot.Scale.logit
+        scale_pb = plotty_pb2.Plot.Scale.logit
     return scale_pb
 
 
@@ -1046,7 +1046,7 @@ def convert_namespace_to_config(options, gen_options=None):
         gen_options.__setattr__(par, options.__getattribute__(par))
 
     # 2. Plot
-    plot_pb = proto.plotty_pb2.Plot()
+    plot_pb = plotty_pb2.Plot()
     # copy all the 1:1 options:Plot parameters
     for par in PLOT_PARAMETERS:
         plot_pb.__setattr__(par, options.__getattribute__(par))
@@ -1153,8 +1153,8 @@ def convert_namespace_to_postfilters(options):
     postfilter_list = []
     # process histogram
     if options.histogram:
-        postfilter_pb = proto.plotty_pb2.Postfilter()
-        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.hist
+        postfilter_pb = plotty_pb2.Postfilter()
+        postfilter_pb.type = plotty_pb2.Postfilter.Type.hist
         postfilter_pb.histogram.CopyFrom(convert_namespace_to_histogram(options))
         postfilter_list.append(postfilter_pb)
     return postfilter_list
@@ -1166,89 +1166,89 @@ def convert_options_to_postfilters(options):
     if options.postfilter:
         for postfilter in options.postfilter:
             _type, parameter = postfilter.split()
-            postfilter_pb = proto.plotty_pb2.Postfilter()
-            assert _type in proto.plotty_pb2.Postfilter.Type.keys(), (
+            postfilter_pb = plotty_pb2.Postfilter()
+            assert _type in plotty_pb2.Postfilter.Type.keys(), (
                 f"error: invalid postfilter type: {_type}. Valid values"
-                f"are {proto.plotty_pb2.Postfilter.Type.keys()}"
+                f"are {plotty_pb2.Postfilter.Type.keys()}"
             )
-            postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.Value(_type)
+            postfilter_pb.type = plotty_pb2.Postfilter.Type.Value(_type)
             postfilter_pb.parameter = float(parameter)
             postfilter_list.append(postfilter_pb)
     # process simpler values
     if options.xshift:
-        postfilter_pb = proto.plotty_pb2.Postfilter()
-        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.xshift
+        postfilter_pb = plotty_pb2.Postfilter()
+        postfilter_pb.type = plotty_pb2.Postfilter.Type.xshift
         postfilter_pb.parameter = float(options.xshift)
         postfilter_list.append(postfilter_pb)
     if options.yshift:
-        postfilter_pb = proto.plotty_pb2.Postfilter()
-        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.yshift
+        postfilter_pb = plotty_pb2.Postfilter()
+        postfilter_pb.type = plotty_pb2.Postfilter.Type.yshift
         postfilter_pb.parameter = float(options.yshift)
         postfilter_list.append(postfilter_pb)
     if options.xfactor:
-        postfilter_pb = proto.plotty_pb2.Postfilter()
-        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.xfactor
+        postfilter_pb = plotty_pb2.Postfilter()
+        postfilter_pb.type = plotty_pb2.Postfilter.Type.xfactor
         postfilter_pb.parameter = options.xfactor
         postfilter_list.append(postfilter_pb)
     if options.yfactor:
-        postfilter_pb = proto.plotty_pb2.Postfilter()
-        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.yfactor
+        postfilter_pb = plotty_pb2.Postfilter()
+        postfilter_pb.type = plotty_pb2.Postfilter.Type.yfactor
         postfilter_pb.parameter = options.yfactor
         postfilter_list.append(postfilter_pb)
     if options.ydelta:
-        postfilter_pb = proto.plotty_pb2.Postfilter()
-        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.ydelta
+        postfilter_pb = plotty_pb2.Postfilter()
+        postfilter_pb.type = plotty_pb2.Postfilter.Type.ydelta
         postfilter_pb.parameter = options.ydelta
         postfilter_list.append(postfilter_pb)
     if options.ycumulative:
-        postfilter_pb = proto.plotty_pb2.Postfilter()
-        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.ycumulative
+        postfilter_pb = plotty_pb2.Postfilter()
+        postfilter_pb.type = plotty_pb2.Postfilter.Type.ycumulative
         postfilter_pb.parameter = options.ycumulative
         postfilter_list.append(postfilter_pb)
     if options.use_mean:
-        postfilter_pb = proto.plotty_pb2.Postfilter()
-        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.mean
+        postfilter_pb = plotty_pb2.Postfilter()
+        postfilter_pb.type = plotty_pb2.Postfilter.Type.mean
         postfilter_list.append(postfilter_pb)
     if options.use_median:
-        postfilter_pb = proto.plotty_pb2.Postfilter()
-        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.median
+        postfilter_pb = plotty_pb2.Postfilter()
+        postfilter_pb.type = plotty_pb2.Postfilter.Type.median
         postfilter_list.append(postfilter_pb)
     if options.use_stddev:
-        postfilter_pb = proto.plotty_pb2.Postfilter()
-        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.stddev
+        postfilter_pb = plotty_pb2.Postfilter()
+        postfilter_pb.type = plotty_pb2.Postfilter.Type.stddev
         postfilter_list.append(postfilter_pb)
     if options.use_regression:
-        postfilter_pb = proto.plotty_pb2.Postfilter()
-        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.regression
+        postfilter_pb = plotty_pb2.Postfilter()
+        postfilter_pb.type = plotty_pb2.Postfilter.Type.regression
         postfilter_list.append(postfilter_pb)
     if options.use_moving_average is not None:
-        postfilter_pb = proto.plotty_pb2.Postfilter()
-        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.moving_average
+        postfilter_pb = plotty_pb2.Postfilter()
+        postfilter_pb.type = plotty_pb2.Postfilter.Type.moving_average
         postfilter_pb.parameter = options.use_moving_average
         postfilter_list.append(postfilter_pb)
     if options.use_ewma is not None:
-        postfilter_pb = proto.plotty_pb2.Postfilter()
-        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.ewma
+        postfilter_pb = plotty_pb2.Postfilter()
+        postfilter_pb.type = plotty_pb2.Postfilter.Type.ewma
         postfilter_pb.parameter = options.use_ewma
         postfilter_list.append(postfilter_pb)
     if options.xsort:
-        postfilter_pb = proto.plotty_pb2.Postfilter()
-        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.xsort
+        postfilter_pb = plotty_pb2.Postfilter()
+        postfilter_pb.type = plotty_pb2.Postfilter.Type.xsort
         postfilter_pb.parameter = options.xsort
         postfilter_list.append(postfilter_pb)
     if options.ysort:
-        postfilter_pb = proto.plotty_pb2.Postfilter()
-        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.ysort
+        postfilter_pb = plotty_pb2.Postfilter()
+        postfilter_pb.type = plotty_pb2.Postfilter.Type.ysort
         postfilter_pb.parameter = options.ysort
         postfilter_list.append(postfilter_pb)
     if options.xeval:
-        postfilter_pb = proto.plotty_pb2.Postfilter()
-        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.xeval
+        postfilter_pb = plotty_pb2.Postfilter()
+        postfilter_pb.type = plotty_pb2.Postfilter.Type.xeval
         postfilter_pb.parameter_str = options.xeval
         postfilter_list.append(postfilter_pb)
     if options.yeval:
-        postfilter_pb = proto.plotty_pb2.Postfilter()
-        postfilter_pb.type = proto.plotty_pb2.Postfilter.Type.yeval
+        postfilter_pb = plotty_pb2.Postfilter()
+        postfilter_pb.type = plotty_pb2.Postfilter.Type.yeval
         postfilter_pb.parameter_str = options.yeval
         postfilter_list.append(postfilter_pb)
     return postfilter_list
@@ -1257,13 +1257,13 @@ def convert_options_to_postfilters(options):
 def convert_namespace_to_histogram(options):
     if not options.histogram:
         return None
-    histogram_pb = proto.plotty_pb2.Histogram()
+    histogram_pb = plotty_pb2.Histogram()
     histogram_pb.enable = options.histogram
     histogram_pb.bins = options.histogram_bins
     histogram_pb.nozeroes = options.histogram_nozeroes
     if options.histogram_sigma is not None:
         histogram_pb.sigma = options.histogram_sigma
-    histogram_pb.type = proto.plotty_pb2.Histogram.Type.Value(options.histogram_type)
+    histogram_pb.type = plotty_pb2.Histogram.Type.Value(options.histogram_type)
     return histogram_pb
 
 
@@ -1308,10 +1308,10 @@ def get_parameter(plot_pb, line_pb, par):
     # 1. Plot parameters
     if par == "xfmt":
         xfmt_id = plot_pb.xfmt
-        return proto.plotty_pb2.Plot.ColumnFmt.Name(xfmt_id)
+        return plotty_pb2.Plot.ColumnFmt.Name(xfmt_id)
     if par == "yfmt":
         yfmt_id = plot_pb.yfmt
-        return proto.plotty_pb2.Plot.ColumnFmt.Name(yfmt_id)
+        return plotty_pb2.Plot.ColumnFmt.Name(yfmt_id)
 
     # 2. Line parameters
     if par in PARAMETER_OPTION_LIST:
@@ -1342,7 +1342,7 @@ def get_parameter(plot_pb, line_pb, par):
         if plot_pb.default_line.__getattribute__(par):
             postfilter_list += plot_pb.default_line.__getattribute__(par)
         # postfilter just does concatenation
-        postfilter_list_pb = proto.plotty_pb2.PostfilterList()
+        postfilter_list_pb = plotty_pb2.PostfilterList()
         for postfilter in postfilter_list:
             postfilter_list_pb.postfilter.append(postfilter)
         return postfilter_list_pb
@@ -1352,20 +1352,20 @@ def get_parameter(plot_pb, line_pb, par):
 
 
 def get_postfilter_type(postfilter_pb):
-    return proto.plotty_pb2.Postfilter.Type.Name(postfilter_pb.type)
+    return plotty_pb2.Postfilter.Type.Name(postfilter_pb.type)
 
 
 def get_histogram_type(histogram_pb):
-    return proto.plotty_pb2.Histogram.Type.Name(histogram_pb.type)
+    return plotty_pb2.Histogram.Type.Name(histogram_pb.type)
 
 
 def get_column_fmt_type(fmt):
-    return proto.plotty_pb2.Plot.ColumnFmt.Name(fmt)
+    return plotty_pb2.Plot.ColumnFmt.Name(fmt)
 
 
 def scale_is_none(scale):
-    return scale == proto.plotty_pb2.Plot.Scale.none
+    return scale == plotty_pb2.Plot.Scale.none
 
 
 def get_scale_type(scale_id):
-    return proto.plotty_pb2.Plot.Scale.Name(scale_id)
+    return plotty_pb2.Plot.Scale.Name(scale_id)
