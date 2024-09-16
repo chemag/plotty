@@ -58,14 +58,17 @@ def calculate_histogram(options):
     if options.type == "cdf":
         raise AssertionError("error: CDF mode unimplemented")
     # create the output dataframe
-    outdf = pd.DataFrame({"x": bin_edges, "y": hist})
+    outdf = pd.DataFrame({"value": bin_edges, "total": hist})
     if not options.zeroes:
         # remove zeroes
-        outdf = outdf[outdf["y"] != 0]
+        outdf = outdf[outdf["total"] != 0]
     elif options.zeroes_strip:
-        first_element = outdf[outdf.y != 0].index[0]
-        last_element = outdf[outdf.y != 0].index[-1]
+        first_element = outdf[outdf.total != 0].index[0]
+        last_element = outdf[outdf.total != 0].index[-1]
         outdf = outdf.iloc[first_element:last_element]
+    # add ratios
+    total_occurrences = int(outdf.total.sum())
+    outdf["ratio"] = outdf.apply(lambda row: row["total"] / total_occurrences, axis=1)
     # write outfile
     outdf.to_csv(options.outfile, index=False)
 
