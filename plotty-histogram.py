@@ -27,6 +27,7 @@ default_values = {
     "header": True,
     "zeroes": True,
     "zeroes-strip": False,
+    "zeroes-coalesce": False,
     "sigma": None,
     "type": "raw",
     "infile": None,
@@ -66,6 +67,16 @@ def calculate_histogram(options):
         first_element = outdf[outdf.total != 0].index[0]
         last_element = outdf[outdf.total != 0].index[-1]
         outdf = outdf.iloc[first_element:last_element]
+    elif options.zeroes_coalesce:
+        # remove all rows such that (a) its value for the column total is zero, and
+        # (b) the value for the column total is zero for both the top and bottom row
+        outdf = outdf[
+            (outdf.total != 0)
+            | (
+                (outdf.total == 0)
+                & ((outdf.total.shift() != 0) | (outdf.total.shift(-1) != 0))
+            )
+        ]
     # add ratios
     total_occurrences = int(outdf.total.sum())
     outdf["ratio"] = outdf.apply(lambda row: row["total"] / total_occurrences, axis=1)
@@ -188,15 +199,30 @@ def get_options(argv):
         dest="zeroes_strip",
         action="store_true",
         default=default_values["zeroes-strip"],
-        help="Do not ignore zero elements%s"
+        help="Strip zero elements at the left and right sides%s"
         % (" [default]" if default_values["zeroes-strip"] else ""),
     )
     parser.add_argument(
         "--no-zeroes-strip",
         dest="zeroes_strip",
         action="store_false",
-        help="Ignore zero elements%s"
+        help="Do not strip zero elements at the left and right sides%s"
         % (" [default]" if not default_values["zeroes-strip"] else ""),
+    )
+    parser.add_argument(
+        "--zeroes-coalesce",
+        dest="zeroes_coalesce",
+        action="store_true",
+        default=default_values["zeroes-coalesce"],
+        help="Coalesce adjacent zero elements%s"
+        % (" [default]" if default_values["zeroes-coalesce"] else ""),
+    )
+    parser.add_argument(
+        "--no-zeroes-coalesce",
+        dest="zeroes_coalesce",
+        action="store_false",
+        help="Do not coalesce adjacent zero elements%s"
+        % (" [default]" if not default_values["zeroes-coalesce"] else ""),
     )
     parser.add_argument(
         "--sigma",
