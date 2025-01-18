@@ -978,20 +978,20 @@ def plot_pb_add_defaults(plot_pb):
     return plot_pb
 
 
-PLOT_PARAMETERS = [
-    "marker",
-    # 'figsize',
-    "title",
-    "xfmt",
-    "yfmt",
-    "fmtdate",
-    "xlabel",
-    "ylabel",
-    "ylabel2",
-    "legend_loc",
-    # 'xscale',
-    # 'yscale',
-]
+PLOT_PARAMETERS = {
+    "marker": str,
+    # 'figsize': str,
+    "title": str,
+    "xfmt": plotty_pb2.Plot.ColumnFmt.Value,
+    "yfmt": plotty_pb2.Plot.ColumnFmt.Value,
+    "fmtdate": str,
+    "xlabel": str,
+    "ylabel": str,
+    "ylabel2": str,
+    "legend_loc": str,
+    # 'xscale': str,
+    # 'yscale': str,
+}
 
 LINE_PARAMETERS = [
     "xcol",
@@ -1048,8 +1048,14 @@ def convert_namespace_to_config(options, gen_options=None):
     # 2. Plot
     plot_pb = plotty_pb2.Plot()
     # copy all the 1:1 options:Plot parameters
-    for par in PLOT_PARAMETERS:
-        plot_pb.__setattr__(par, options.__getattribute__(par))
+    for par, fn in PLOT_PARAMETERS.items():
+        # read the parameter value in options
+        prevalue = options.__getattribute__(par)
+        # convert the options value into something that the plot object accepts
+        value = fn(prevalue)
+        # write the parameter value into the plot object
+        plot_pb.__setattr__(par, value)
+
     # special parameters
     # figsize
     if options.figsize:
