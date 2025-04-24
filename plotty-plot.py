@@ -179,7 +179,7 @@ def fmt_convert(item, fmt):
         return int(float(item))
     elif fmt == "float":
         if item == "":
-            return ""
+            return np.nan
         elif item is None or item == "None":
             return np.nan
         return float(item)
