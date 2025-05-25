@@ -94,7 +94,7 @@ VALID_MATPLOTLIB_COLORS = (
 )
 
 
-VALID_COLUMN_FMTS = ("float", "int", "unix")
+VALID_COLUMN_FMTS = ("float", "int", "unix", "str")
 
 
 VALID_HISTOGRAM_TYPES = ("raw", "pdf", "cdf")

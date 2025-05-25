@@ -105,6 +105,7 @@ message Plot {
     float = 0;
     int = 1;
     unix = 2;
+    str = 3;
   }
   optional ColumnFmt xfmt = 17;
   optional ColumnFmt yfmt = 18;

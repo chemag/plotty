@@ -186,6 +186,8 @@ def fmt_convert(item, fmt):
     elif fmt == "unix":
         # convert unix timestamp to matplotlib datenum
         return md.date2num(datetime.datetime.fromtimestamp(float(item)))
+    elif fmt == "str":
+        return item
     raise Exception("Error: invalid fmt (%s)" % fmt)
 
 
@@ -212,6 +214,8 @@ def create_graph_begin(plot_pb):
     if xfmt == "unix":
         xfmt = md.DateFormatter(plot_pb.fmtdate)
         ax1.xaxis.set_major_formatter(xfmt)
+    elif xfmt == "str":
+        plt.xticks(rotation=-45)
     return fig, ax1
 
 
