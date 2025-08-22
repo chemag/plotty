@@ -871,7 +871,7 @@ def plots_pb_read(inplot, lineid):
         plots_pb_fill(plots_pb)
     # make sure the lines exist
     for plot_line_id in lineid:
-        plot_id, line_id = plot_line_id.split("/")
+        plot_id, line_id = plot_line_id.split("/", maxsplit=1)
         # search for the line in plots_list
         line_found = False
         for inplot_file, plots_pb in plots_list:
